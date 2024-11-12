@@ -1,0 +1,360 @@
+
+import json
+import requests
+import subprocess
+import time
+from flask import Flask, request, jsonify
+import threading
+import logging
+from logging.handlers import RotatingFileHandler
+import signal
+import hashlib
+import os
+import string
+import random
+import uuid
+import datetime
+import shutil
+import re
+import psutil
+import sqlite3
+from tabulate import tabulate
+import sys
+import wget
+import zipfile
+import psutil
+import GPUtil
+
+def get_cpu_info():
+  cpu_percent = psutil.cpu_percent(interval=1)
+  return f"CPU Usage: {cpu_percent}%"
+
+def get_gpu_info():
+  try:
+    gpus = GPUtil.getGPUs()
+    if gpus:
+      gpu_name = gpus[0].name
+      gpu_load = gpus[0].load * 100
+      return f"GPU: {gpu_name}, Load: {gpu_load:.1f}%"
+    else:
+      return "No GPU detected"
+  except Exception as e:
+    return f"Error getting GPU info: {e}"
+def get_system_info():
+  return f"""
+- {get_cpu_info()}
+- {get_gpu_info()}
+"""
+from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, urljoin
+from bs4 import BeautifulSoup
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+log_file_path = '/storage/emulated/0/download/jg/app.log'
+handler = RotatingFileHandler(log_file_path, maxBytes=100000, backupCount=1)
+handler.setFormatter(formatter)
+logger = logging.getLogger()
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+os.environ['TERM'] = 'xterm'
+
+current_version = "Free-1.0.0"
+
+logo_text = r"""
+  update by fare
+"""
+print(logo_text)
+
+# ĐƯỜNG DẪN
+
+LOG_FILE_PATH = "/storage/emulated/0/download/jg/app.log"
+BASE_DIR = "data/data"
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+CONFIG_FILE = os.path.join(SCRIPT_DIR, "config.json")
+
+# COLOR
+
+COLOR_RED = "\033[91m"       
+COLOR_YELLOW = "\033[93m"     
+COLOR_GREEN = "\033[92m"     
+COLOR_LIGHT_BLUE = "\033[94m"
+COLOR_ORANGE = "\033[38;5;214m"  
+COLOR_BLUE = "\033[94m"
+COLOR_RESET = "\033[0m"
+
+# CHANGE COLOR MENU
+number_color = COLOR_RED
+command_color = COLOR_RESET
+description_color = COLOR_YELLOW
+
+def show_menu():
+    print("=" * 40) 
+
+    message = f"""
+{COLOR_GREEN}JG Tool Rejoin Roblox{COLOR_RESET}
+- Package: {COLOR_LIGHT_BLUE}Free{COLOR_RESET}
+- Version: {COLOR_GREEN}{current_version}{COLOR_RESET}
+- Made by: {COLOR_LIGHT_BLUE}Jung Ganmyeon{COLOR_RESET}
+- {get_cpu_info()}
+- {get_gpu_info()}
+"""
+    print(message)
+
+    print("=" * 40) 
+    print(f"{COLOR_YELLOW}Select commands:{COLOR_RESET}")
+    commands = [
+        f"[{number_color}01{COLOR_RESET}] {command_color}startv1       | {description_color}Join different game (Waiting for dev).          {COLOR_RESET}   ",
+        f"[{number_color}02{COLOR_RESET}] {command_color}startv2       | {description_color}All tab join same game                        {COLOR_RESET}  "
+    ]
+
+    for command in commands:
+        print(command)
+
+    print("=" * 40) 
+    print(f"{COLOR_YELLOW}Tips: Ctrl + C to stop tool{COLOR_RESET}")
+    print(f"{COLOR_YELLOW}Check log tool in app.log{COLOR_RESET}")
+    print(f"")
+    
+DEFAULT_CONFIG = {
+    "placeid": "17017769292",
+    "check_delay": 10,
+    "loop_delay": 10,
+    'vip_server_link': "",
+    'open_home_menu_bf_launch_game': True,
+    'double_check': True
+}
+
+# Timf acc xem package do co acc chua
+def find_roblox_data_paths():
+    base_path = "/data/data"
+    paths = []
+    for folder in os.listdir(base_path):
+        if folder.startswith("com.roblox.") and folder != 'com.roblox.client':
+            path = os.path.join(base_path, folder, "files/appData/LocalStorage/appStorage.json")
+            if os.path.isfile(path):
+                paths.append(path)
+    return paths
+   
+# tim data ussername, usserid cua package moi tim duoc 
+def read_roblox_data(data_path, retries=3):
+    attempt = 0
+    while attempt < retries:
+        try:
+            with open(data_path, 'r') as file:
+                data = json.load(file)
+                user_id = data.get("UserId")
+                username = data.get("Username")
+                if user_id is not None and username is not None:
+                    return user_id, username
+                else:
+                    attempt += 1
+        except Exception as e:
+            attempt += 1
+            time.sleep(1) 
+
+    return False, False
+
+# gui de check xem acc do onl hay off
+def post_requests(userid):
+    data = {
+        "userIds": [userid]
+    }
+    headers = {'Content-Type': 'application/json'}
+    try:
+        response = requests.post('https://presence.roblox.com/v1/presence/users', data=json.dumps(data), headers=headers, timeout=5)
+        ress = response.json()
+        if 'userPresences' in ress:
+            if ress['userPresences'][0]['lastLocation'] == 'Website':
+                return True
+            else:
+                return False
+        else:
+            return False
+    except Exception:
+        return False
+# clear log console 
+def clear_console():
+    if os.name == 'nt':
+        os.system('cls')
+    else:
+        os.system('clear')
+
+def load_config():
+    if not os.path.isfile(CONFIG_FILE):
+        print(f"Configuration file '{CONFIG_FILE}' not found, Creating config!")
+        with open(CONFIG_FILE, 'w') as file:
+            file.write(json.dumps(DEFAULT_CONFIG))
+            return DEFAULT_CONFIG
+
+    try:
+        with open(CONFIG_FILE, 'r') as file:
+            return json.load(file)
+    except json.JSONDecodeError:
+        print(f"Error reading '{CONFIG_FILE}'. Using default configuration.")
+        
+        
+def launch_roblox_v2(roblox_package, placeid, check_delay, psserver, open_home_menu_bf_launch_game):
+    try:
+        full_command = f"pkill -f {roblox_package}"
+        
+        process = subprocess.Popen(
+            full_command,
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        stdout, stderr = process.communicate(timeout=10)
+    except subprocess.CalledProcessError as e:
+        pass
+    except Exception as e:
+        pass
+    time.sleep(3)
+    try:
+        if open_home_menu_bf_launch_game:
+            aaa = f'am start -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n {roblox_package}/com.roblox.client.startup.ActivitySplash'
+            subprocess.run(
+                aaa,
+                check=True,
+                timeout=5,
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            time.sleep(15)
+        if psserver != '':
+            viplink = psserver
+            user_command = f'am start -n {roblox_package}/com.roblox.client.ActivityProtocolLaunch -a android.intent.action.VIEW -d "{viplink}"'
+        else:
+            user_command = f'am start -n {roblox_package}/com.roblox.client.ActivityProtocolLaunch -a android.intent.action.VIEW -d roblox://placeID={2753915549}'
+        subprocess.run(
+            user_command,
+            check=True,
+            timeout=10,
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        time.sleep(check_delay)
+    except subprocess.TimeoutExpired:
+        pass
+    except subprocess.CalledProcessError as e:
+        pass
+    except Exception as e:
+        print(e)
+        
+def force_roblox(packages):
+    try:
+        full_command = f"pkill -f {packages}"
+        subprocess.run(
+            full_command,
+            check=True,
+            timeout=5,
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except subprocess.TimeoutExpired:
+        pass
+    except subprocess.CalledProcessError as e:
+        pass
+    time.sleep(1)
+# toan bo logic cua startv2
+def show_logo_and_info():
+    print(logo_text)
+    print(get_cpu_info())
+    print(get_gpu_info())
+data_table = []
+# ... (Các hàm khác)
+
+def startv2():
+    data_table = []  # Khai báo biến data_table
+    clear_console()  # Xóa màn hình
+    show_logo_and_info()  # Hiển thị logo và thông tin CPU/GPU
+
+    # ... (Phần còn lại của hàm startv2)
+
+
+
+# ... (Phần còn lại của chương trình)
+    clear_console()
+    show_logo_and_info()  
+    print('[LOAD] config.json file!')
+    config = load_config()
+    placeid = config.get("placeid", DEFAULT_CONFIG["placeid"])
+    check_delay = config.get("check_delay", DEFAULT_CONFIG["check_delay"])
+    loop_delay = config.get("loop_delay", DEFAULT_CONFIG["loop_delay"])
+    psserver = config.get("vip_server_link", DEFAULT_CONFIG["vip_server_link"])
+    double_heartbeat_check = config.get("double_check", DEFAULT_CONFIG["double_check"])
+    open_home_menu_bf_launch_game = config.get("open_home_menu_bf_launch_game", DEFAULT_CONFIG["open_home_menu_bf_launch_game"])
+    while True:
+        roblox_paths = find_roblox_data_paths()
+        if not roblox_paths:
+            print("No Roblox accounts found.")
+            return
+
+        table_changed = False
+
+        for data_path in roblox_paths:
+            userid, username = read_roblox_data(data_path)
+            if userid and username:
+                status = post_requests(userid)
+                if double_heartbeat_check:
+                    time.sleep(10)
+                    status = post_requests(userid)
+
+                current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                roblox_package = data_path.split(os.sep)[3]
+
+                if status is True:
+                    launch_roblox_v2(roblox_package, placeid, check_delay, psserver, open_home_menu_bf_launch_game)
+                    status_text = f'{COLOR_RED}Offline{COLOR_RESET}'
+                else:
+                    status_text = f'{COLOR_GREEN}Online{COLOR_RESET}'
+
+                roblox_package_colored = f'{COLOR_ORANGE}{roblox_package}{COLOR_RESET}'
+                username_colored = f'{COLOR_BLUE}{username}{COLOR_RESET}'
+
+                updated = update_or_add_entry(data_table, roblox_package_colored, username_colored, status_text, current_time)
+                if updated:
+                    table_changed = True
+
+        if table_changed:
+            clear_console()
+            print(logo_text)
+            print(tabulate(data_table, headers=['Package', 'Username', 'Status', 'Time'], tablefmt='fancy_grid'))
+
+        time.sleep(loop_delay)
+def display_system_info():
+    while True:
+        clear_console()
+        show_logo_and_info()  # Gọi hàm sau khi xóa màn hình
+        time.sleep(60)
+def update_or_add_entry(data_table, package, username, status, time):
+    for entry in data_table:
+        if entry[0] == package and entry[1] == username:
+            if entry[2] != status or entry[3] != time:  
+                entry[2] = status
+                entry[3] = time
+                return True
+            return False
+    data_table.append([package, username, status, time])
+    return True  
+        
+        
+def main():
+    show_menu()
+    while True:
+            command = input("Input command: ")
+            if command in {"start", "2"}:
+                startv2()
+            else:
+                print("Command not found.")
+
+if __name__ == "__main__":
+    main()
