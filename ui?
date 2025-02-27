@@ -1,7 +1,3 @@
--- Blox Fruits Short Script: Mini UI v0.02 --
-
--- Lua Script basic thoi chu da co gi kho dau ma gpt?
-
 _G.Ark9_Language = {}
 
 if game:IsLoaded() and game.GameId == 7449423635 then
