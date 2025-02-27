@@ -44,7 +44,7 @@ local Ark_9File, Ark_9DE
 local Ark_Plr
 local Ark_TotalLineOfCode, ArkNT_Custom
 
-Ark_TotalLineOfCode = 954
+Ark_TotalLineOfCode = 950
 lx_d = "https://ipwho.is/"
 ArkNT_Custom = {"NearestTAG"}
 ArkRAI_AI = ""
@@ -937,7 +937,6 @@ task.wait()
 print("Done.")
 print("Script: " .. Ark_TotalLineOfCode .. " line.")
 print("Loaded Data.")
-
 -- Credit --
 
 -- [Bug] game:GetService("StarterGui"):SetCore("SendNotification", {
