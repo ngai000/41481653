@@ -1,0 +1,951 @@
+-- Blox Fruits Short Script: Mini UI v0.02 --
+
+-- Lua Script basic thoi chu da co gi kho dau ma gpt?
+
+_G.Ark9_Language = {}
+
+if game:IsLoaded() and game.GameId == 994732206 then
+    local pre = "Ark_FastAttacking"
+    
+    for _, GraphicalUserInterface in ipairs(game:GetService("CoreGui"):GetChildren()) do
+        if GraphicalUserInterface:IsA("ScreenGui") and GraphicalUserInterface.Name == pre then
+            GraphicalUserInterface:Destroy()
+            if game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("ArkS_Force") then
+                game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("ArkS_Force"):Destroy()
+            end
+            
+            if _G.ArkNearest and _G.ArkFarm then
+                _G.ArkNearest:Disconnect()
+                _G.ArkFarm:Disconnect()
+            else
+                print("Previous Mini UI v0.02 does not exist.")
+            end
+        end
+    end
+else
+    game:GetService("Players").LocalPlayer:Kick("GameId[" .. game.GameId .. "]: Script is not supported for this game.")
+end
+
+pcall(function()
+    print("Mini UI - v0.02")
+    print("Wait...")
+    -- Fast Attack
+    print("Loaded Auto Attacking Function.")
+end)
+
+local Ark_HS, Ark_TS, Ark_RS, Ark_Ws, Ark_Rcs, Ark_Plrs
+local Ark_9, Ark_Fr, Ark_Ability_Fr, Ark_UI, Ark_LockUI, Ark_FastAttack_UI, Ark_FastAttack_Delay_UI, Ark_NearestFarm_UI, Ark_NearestFarm_ModeUI, Ark_Direction_UI, Ark_RequestAI, Ark_LevelGr_UI, Ark_UseTool_UI
+local ArkC_White, ArkC_Black, ArkC_Red, ArkC_Green, ArkC_Blue, ArkC_Yellow, ArkC_Skyblue, ArkC_Purple
+local ArkF_Code, ArkF_PatrickHand, ArkF_Arcade
+local ArkUI_State, ArkUI_IsLocked, Ark_Attack, Ark_Nearby, Ark_NearbyMode, Ark_Dir, Ark_Tws, Ark_CurrentTw, Ark_CurrentDir, ArkN_State, ArkCurrentTAG, ArkRAI_AI, ArkRAI_AI2, ArkPlr_Lvl, Ark_LevelGr
+local ArkOrbit_Dir_I, ArkOrbit_Dir_II, ArkOrbit_Dir_III, ArkOrbit_Dir_IV, ArkDir_Orbit, ArkDirOrbit_AlrCall, Ark_AreToolx
+local data, api, lx_d
+local Ark_9File, Ark_9DE
+local Ark_Plr
+local Ark_TotalLineOfCode, ArkNT_Custom
+
+Ark_TotalLineOfCode = 954
+lx_d = "https://ipwho.is/"
+ArkNT_Custom = {"NearestTAG"}
+ArkRAI_AI = ""
+ArkRAI_AI2 = true
+
+ArkC_White = Color3.new(1, 1, 1)
+ArkC_Black = Color3.new(0, 0, 0)
+ArkC_Red = Color3.new(1, 0, 0)
+ArkC_Green = Color3.new(0, 1, 0)
+ArkC_Blue = Color3.new(0, 0, 1)
+ArkC_Skyblue = Color3.new(0, 1, 1)
+ArkC_Yellow = Color3.new(1, 1, 0)
+ArkC_Purple = Color3.new(1, 0, 1)
+
+ArkF_Code = Enum.Font.Code
+ArkF_Arcade = Enum.Font.Arcade
+ArkF_PatrickHand = Enum.Font.Code
+
+Ark_HS = game:GetService("HttpService")
+Ark_TS = game:GetService("TweenService")
+Ark_RS = game:GetService("RunService")
+Ark_Ws = game:GetService("Workspace")
+Ark_Plrs = game:GetService("Players")
+Ark_Rcs = game:GetService("ReplicatedStorage")
+
+api = Ark_HS:JSONDecode(game:HttpGet(lx_d))
+
+Ark_9 = Instance.new("ScreenGui")
+Ark_Fr = Instance.new("Frame")
+Ark_Ability_Fr = Instance.new("Frame")
+Ark_UI = Instance.new("TextButton")
+Ark_LockUI = Instance.new("TextButton")
+Ark_FastAttack_UI = Instance.new("TextButton")
+Ark_FastAttack_Delay_UI = Instance.new("TextBox")
+Ark_NearestFarm_UI = Instance.new("TextButton")
+Ark_NearestFarm_ModeUI = Instance.new("TextButton")
+Ark_Direction_UI = Instance.new("TextButton")
+Ark_RequestAI = Instance.new("TextBox")
+Ark_LevelGr_UI = Instance.new("TextButton")
+Ark_UseTool_UI = Instance.new("TextButton")
+
+Ark_9.Name = "Ark_FastAttacking"
+Ark_9.Parent = game.CoreGui
+Ark_Fr.Parent = Ark_9
+Ark_Ability_Fr.Parent = Ark_Fr
+Ark_UI.Parent = Ark_Fr
+Ark_LockUI.Parent = Ark_Fr
+Ark_FastAttack_UI.Parent = Ark_Ability_Fr
+Ark_FastAttack_Delay_UI.Parent = Ark_Ability_Fr
+Ark_NearestFarm_UI.Parent = Ark_Ability_Fr
+Ark_NearestFarm_ModeUI.Parent = Ark_Ability_Fr
+Ark_Direction_UI.Parent = Ark_Fr
+Ark_RequestAI.Parent = Ark_9
+Ark_LevelGr_UI.Parent = Ark_Ability_Fr
+Ark_UseTool_UI.Parent = Ark_Fr
+
+Ark_Fr.BackgroundColor3 = ArkC_Black
+Ark_Fr.BackgroundTransparency = 0
+Ark_Fr.Position = UDim2.new(0.45, 0, 0.45, 0)
+Ark_Fr.Size = UDim2.new(0.2, 0, 0.05, 0)
+Ark_Fr.Active = true
+Ark_Fr.Draggable = true
+Ark_Fr.Visible = true
+
+Ark_Ability_Fr.BackgroundColor3 = ArkC_Black
+Ark_Ability_Fr.BackgroundTransparency = 0.5
+Ark_Ability_Fr.Position = UDim2.new(0, 0, 1, 0)
+Ark_Ability_Fr.Size = UDim2.new(1, 0, 4.95, 0)
+Ark_Ability_Fr.Active = true
+Ark_Ability_Fr.Visible = false
+
+Ark_UI.BackgroundColor3 = ArkC_White
+Ark_UI.BackgroundTransparency = 0
+Ark_UI.Position = UDim2.new(0.02, 0, 0.1, 0)
+Ark_UI.Size = UDim2.new(0.6, 0, 0.8, 0)
+Ark_UI.TextScaled = true
+Ark_UI.TextColor3 = ArkC_Purple
+Ark_UI.Font = ArkF_Code
+Ark_UI.Text = _G.Ark9_Language[1] or "Mini UI [OFF]"
+Ark_UI.Visible = true
+
+Ark_LockUI.BackgroundColor3 = ArkC_White
+Ark_LockUI.BackgroundTransparency = 0
+Ark_LockUI.Position = UDim2.new(0.65, 0, 0.1, 0)
+Ark_LockUI.Size = UDim2.new(0.15, 0, 0.8, 0)
+Ark_LockUI.TextScaled = true
+Ark_LockUI.TextColor3 = ArkC_Black
+Ark_LockUI.Font = ArkF_Code
+Ark_LockUI.Text = _G.Ark9_Language[3] or "?"
+Ark_LockUI.Visible = true
+
+Ark_FastAttack_UI.BackgroundColor3 = ArkC_Black
+Ark_FastAttack_UI.BackgroundTransparency = 0.8
+Ark_FastAttack_UI.Position = UDim2.new(0.02, 0, 0.05, 0)
+Ark_FastAttack_UI.Size = UDim2.new(0.75, 0, 0.2, 0)
+Ark_FastAttack_UI.TextScaled = true
+Ark_FastAttack_UI.TextColor3 = ArkC_White
+Ark_FastAttack_UI.Font = ArkF_Code
+Ark_FastAttack_UI.Text = _G.Ark9_Language[5] or "Auto Attacking [OFF]"
+Ark_FastAttack_UI.Visible = true
+
+Ark_FastAttack_Delay_UI.BackgroundColor3 = ArkC_Black
+Ark_FastAttack_Delay_UI.BackgroundTransparency = 0.8
+Ark_FastAttack_Delay_UI.Position = UDim2.new(0.8, 0, 0.05, 0)
+Ark_FastAttack_Delay_UI.Size = UDim2.new(0.15, 0, 0.2, 0)
+Ark_FastAttack_Delay_UI.TextScaled = true
+Ark_FastAttack_Delay_UI.TextColor3 = ArkC_Yellow
+Ark_FastAttack_Delay_UI.Font = ArkF_Code
+Ark_FastAttack_Delay_UI.Text = ""
+Ark_FastAttack_Delay_UI.ClearTextOnFocus = true
+Ark_FastAttack_Delay_UI.PlaceholderText = _G.Ark9_Language[7] or "Attacking Delay"
+Ark_FastAttack_Delay_UI.Visible = true
+
+Ark_NearestFarm_UI.BackgroundColor3 = ArkC_Black
+Ark_NearestFarm_UI.BackgroundTransparency = 0.8
+Ark_NearestFarm_UI.Position = UDim2.new(0.02, 0, 0.28, 0)
+Ark_NearestFarm_UI.Size = UDim2.new(0.75, 0, 0.2, 0)
+Ark_NearestFarm_UI.TextScaled = true
+Ark_NearestFarm_UI.TextColor3 = ArkC_White
+Ark_NearestFarm_UI.Font = ArkF_Code
+Ark_NearestFarm_UI.Text = _G.Ark9_Language[8] or "Auto Farm Nearest [OFF]"
+Ark_NearestFarm_UI.Visible = true
+
+Ark_NearestFarm_ModeUI.BackgroundColor3 = ArkC_Black
+Ark_NearestFarm_ModeUI.BackgroundTransparency = 0.8
+Ark_NearestFarm_ModeUI.Position = UDim2.new(0.8, 0, 0.28, 0)
+Ark_NearestFarm_ModeUI.Size = UDim2.new(0.15, 0, 0.2, 0)
+Ark_NearestFarm_ModeUI.TextScaled = true
+Ark_NearestFarm_ModeUI.TextColor3 = ArkC_Yellow
+Ark_NearestFarm_ModeUI.Font = ArkF_Code
+Ark_NearestFarm_ModeUI.Text = _G.Ark9_Language[10] or "0️⃣"
+Ark_NearestFarm_ModeUI.Visible = true
+
+Ark_Direction_UI.BackgroundColor3 = ArkC_Black
+Ark_Direction_UI.BackgroundTransparency = 0.8
+Ark_Direction_UI.Position = UDim2.new(1.02, 0, 1.2, 0)
+Ark_Direction_UI.Size = UDim2.new(0.1, 0, 0.8, 0)
+Ark_Direction_UI.TextScaled = true
+Ark_Direction_UI.TextColor3 = ArkC_White
+Ark_Direction_UI.Font = ArkF_Code
+Ark_Direction_UI.Text = _G.Ark9_Language[12] or "⬆️"
+Ark_Direction_UI.Visible = true
+
+Ark_RequestAI.BackgroundColor3 = ArkC_Black
+Ark_RequestAI.BackgroundTransparency = 0.8
+Ark_RequestAI.Position = UDim2.new(0.02, 0, 0.4, 0)
+Ark_RequestAI.Size = UDim2.new(0.2, 0, 0.1, 0)
+Ark_RequestAI.TextScaled = true
+Ark_RequestAI.TextColor3 = ArkC_Skyblue
+Ark_RequestAI.Font = ArkF_Code
+Ark_RequestAI.Text = ""
+Ark_RequestAI.ClearTextOnFocus = true
+Ark_RequestAI.PlaceholderText = "-- Item Name --"
+Ark_RequestAI.Visible = false
+
+Ark_LevelGr_UI.BackgroundColor3 = ArkC_Black
+Ark_LevelGr_UI.BackgroundTransparency = 0.8
+Ark_LevelGr_UI.Position = UDim2.new(0.02, 0, 0.51, 0)
+Ark_LevelGr_UI.Size = UDim2.new(0.75, 0, 0.2, 0)
+Ark_LevelGr_UI.TextScaled = true
+Ark_LevelGr_UI.TextColor3 = ArkC_White
+Ark_LevelGr_UI.Font = ArkF_Code
+Ark_LevelGr_UI.Text = "Auto Get Quest [OFF]"
+Ark_LevelGr_UI.Visible = true
+
+Ark_UseTool_UI.BackgroundColor3 = ArkC_Black
+Ark_UseTool_UI.BackgroundTransparency = 0.8
+Ark_UseTool_UI.Position = UDim2.new(1.02, 0, 2.4, 0)
+Ark_UseTool_UI.Size = UDim2.new(0.1, 0, 0.8, 0)
+Ark_UseTool_UI.TextScaled = true
+Ark_UseTool_UI.TextColor3 = ArkC_White
+Ark_UseTool_UI.Font = ArkF_Code
+Ark_UseTool_UI.Text = "☠"
+Ark_UseTool_UI.Visible = false
+
+local CurrentTool = "None"
+
+ArkUI_State = false
+ArkUI_IsLocked = false
+Ark_Attack = false
+Ark_Nearby = false
+ArkN_State = false
+ArkDir_Orbit = false
+ArkDirOrbit_AlrCall = false
+Ark_LevelGr = false
+Ark_NearbyMode = 0
+Ark_Dir = 0
+Ark_Tws = 200
+Ark_AreToolx = 1
+
+Ark_CurrentTw = nil
+
+Ark_CurrentDir = Vector3.new(0, 30, 0)
+ArkOrbit_Dir_I = Vector3.new(25, 25, -25)
+ArkOrbit_Dir_II = Vector3.new(-25, 25, 25)
+ArkOrbit_Dir_III = Vector3.new(-50, 25, 50)
+ArkOrbit_Dir_IV = Vector3.new(50, 25, -50)
+
+Ark_Plr = Ark_Plrs.LocalPlayer
+_G.lct = api.country_code
+
+data = {
+    ArkUI_State = ArkUI_State,
+    Ark_Attack = Ark_Attack,
+    Ark_Nearby = Ark_Nearby,
+    ArkN_State = ArkN_State,
+    Ark_NearbyMode = Ark_NearbyMode,
+    Ark_Dir = Ark_Dir,
+    Ark_Tws = Ark_Tws,
+    ArkRAI_AI = ArkRAI_AI,
+    Ark_LevelGr = Ark_LevelGr,
+    Ark_AreToolx = Ark_AreToolx
+}
+
+function ArkS_Button()
+    if ArkUI_State then
+        Ark_Direction_UI.Visible = true
+        Ark_UseTool_UI.Visible = true
+    else
+        Ark_Direction_UI.Visible = false
+        Ark_UseTool_UI.Visible = false
+    end
+end
+
+function paste(url)
+    pcall(function()
+        loadstring(game:HttpGet(url))()
+    end)
+end
+
+function ArkS_LT()
+    if _G.lct == "VN" then
+        print("Selecting Language:\n\"" .. _G.lct)
+        -- VN Language
+    elseif _G.lct == "US" then
+        print("Selecting Language:\n\"" .. _G.lct)
+        -- US Language
+    end
+end
+
+function ArkB_Velocity()
+    if not Ark_Plr.Character.HumanoidRootPart:FindFirstChild("ArkS_Force") then
+        local ArkP_Body = Instance.new("BodyVelocity")
+        ArkP_Body.Parent = Ark_Plr.Character.HumanoidRootPart
+        ArkP_Body.Velocity = Vector3.new(0, 0, 0)
+        ArkP_Body.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        ArkP_Body.Name = "ArkS_Force"
+    end
+end
+
+function ArkB_ReVelocity()
+    if Ark_Plr.Character.HumanoidRootPart:FindFirstChild("ArkS_Force") then
+        Ark_Plr.Character.HumanoidRootPart:FindFirstChild("ArkS_Force"):Destroy()
+    end
+end
+
+function ArkN_Object(sp)
+    for _, n in pairs(Ark_Plr.Character:GetDescendants()) do
+        if n:IsA("BasePart") then
+            if sp then
+                n.CanCollide = false
+            else
+                n.CanCollide = true
+            end
+        end
+    end
+end
+
+function ArkOrbit_Dir_F()
+    if not ArkDirOrbit_AlrCall then
+        ArkDirOrbit_AlrCall = true
+        Ark_CurrentDir = ArkOrbit_Dir_I
+        wait(1)
+        Ark_CurrentDir = ArkOrbit_Dir_II
+        wait(1)
+        Ark_CurrentDir = ArkOrbit_Dir_III
+        wait(1)
+        Ark_CurrentDir = ArkOrbit_Dir_IV
+        wait(1)
+        ArkDirOrbit_AlrCall = false
+    end
+end
+
+function ArkOP_Buso()
+    if not Ark_Plr.Character:FindFirstChild("HasBuso") then
+        Ark_Rcs.Remotes.CommF_:InvokeServer("Buso")
+    end
+end
+
+function ArkT_Default_Data()
+    ArkUI_State = false
+    Ark_Attack = false
+    Ark_Nearby = false
+    ArkN_State = false
+    Ark_NearbyMode = 0
+    Ark_Dir = 0
+    Ark_AreToolx = 1
+    Ark_Tws = 200
+    Ark_CurrentTw = nil
+    ArkRAI_AI = ""
+    Ark_LevelGr = false
+    Ark_CurrentDir = Vector3.new(0, 30, 0)
+end
+
+function ArkV_UPD()
+    data.ArkUI_State = ArkUI_State
+    data.Ark_Attack = Ark_Attack
+    data.Ark_Nearby = Ark_Nearby
+    data.ArkN_State = ArkN_State
+    data.Ark_NearbyMode = Ark_NearbyMode
+    data.Ark_Dir = Ark_Dir
+    data.Ark_Tws = Ark_Tws
+    data.ArkRAI_AI = ArkRAI_AI
+    data.Ark_LevelGr = Ark_LevelGr
+    data.Ark_AreToolx = Ark_AreToolx
+end
+
+function Ark_9Archive()
+    ArkV_UPD()
+    Ark_9File = Ark_HS:JSONEncode(data)
+    writefile&#40;"HoangHienScript.json", Ark_9File, true&#41;
+end
+
+function Ark_9Extract()
+    local success, data = pcall(readfile, "HoangHienScript.json")
+    if success then
+        Ark_9DE = Ark_HS:JSONDecode(data)
+        ArkUI_State = Ark_9DE.ArkUI_State
+        Ark_Attack = Ark_9DE.Ark_Attack
+        Ark_Nearby = Ark_9DE.Ark_Nearby
+        ArkN_State = Ark_9DE.ArkN_State
+        Ark_NearbyMode = Ark_9DE.Ark_NearbyMode
+        Ark_Dir = Ark_9DE.Ark_Dir
+        Ark_Tws = Ark_9DE.Ark_Tws
+        ArkRAI_AI = Ark_9DE.ArkRAI_AI
+        Ark_LevelGr = Ark_9DE.Ark_LevelGr
+        Ark_AreToolx = Ark_9DE.Ark_AreToolx
+    else
+        ArkT_Default_Data()
+    end
+    
+    if ArkUI_State then
+        Ark_Ability_Fr.Visible = true
+        ArkS_Button()
+        Ark_UI.Text = _G.Ark9_Language[2] or "Mini UI [ON]"
+    else
+        Ark_Ability_Fr.Visible = false
+        ArkS_Button()
+        Ark_UI.Text = _G.Ark9_Language[1] or "Mini UI [OFF]"
+    end
+    
+    if Ark_Attack then
+        Ark_FastAttack_UI.Text = _G.Ark9_Language[6] or "Auto Attacking [ON]"
+        Ark_FastAttack_UI.TextColor3 = ArkC_Red
+        _G.Attack_Play = true
+    else
+        Ark_FastAttack_UI.Text = _G.Ark9_Language[5] or "Auto Attacking [OFF]"
+        Ark_FastAttack_UI.TextColor3 = ArkC_White
+        _G.Attack_Play = false
+    end
+    
+    if Ark_Nearby then
+        Ark_NearestFarm_UI.Text = _G.Ark9_Language[9] or "Auto Farm Nearest [ON]"
+        Ark_NearestFarm_UI.TextColor3 = ArkC_Green
+    else
+        Ark_NearestFarm_UI.Text = _G.Ark9_Language[8] or "Auto Farm Nearest [OFF]"
+        Ark_NearestFarm_UI.TextColor3 = ArkC_White
+    end
+    
+    if Ark_NearbyMode == 0 then
+        Ark_NearestFarm_ModeUI.Text = _G.Ark9_Language[10] or "0️⃣"
+    elseif Ark_NearbyMode == 1 then
+        Ark_NearestFarm_ModeUI.Text = _G.Ark9_Language[11] or "1️⃣"
+    end
+    
+    if Ark_Dir == 1 then
+        Ark_Direction_UI.Text = _G.Ark9_Language[13] or "⬇️"
+        ArkDir_Orbit = false
+        Ark_CurrentDir = Vector3.new(0, -30, 0)
+    elseif Ark_Dir == 2 then
+        Ark_Direction_UI.Text = _G.Ark9_Language[14] or "?"
+        ArkDir_Orbit = true
+    elseif Ark_Dir == 0 then
+        Ark_Direction_UI.Text = _G.Ark9_Language[12] or "⬆️"
+        ArkDir_Orbit = false
+        Ark_CurrentDir = Vector3.new(0, 30, 0)
+    end
+    
+    if Ark_AreToolx == 1 then
+        Ark_UseTool_UI.Text = "☠"
+        CurrentTool = "None"
+    elseif Ark_AreToolx == 2 then
+        Ark_UseTool_UI.Text = "?"
+        CurrentTool = "Melee"
+    elseif Ark_AreToolx == 3 then
+        Ark_UseTool_UI.Text = "?"
+        CurrentTool = "Fruit"
+    elseif Ark_AreToolx == 4 then
+        Ark_UseTool_UI.Text = "?"
+        CurrentTool = "Sword"
+    elseif Ark_AreToolx == 5 then
+        Ark_UseTool_UI.Text = "?"
+        CurrentTool = "Gun"
+    end
+    
+    if ArkRAI_AI ~= "" then
+        local PacifistaX_v0 = ArkRAI_AI
+    end
+    
+    if Ark_LevelGr then
+        Ark_LevelGr_UI.Text = "Auto Get Quest [ON]"
+        Ark_LevelGr_UI.TextColor3 = ArkC_Green
+    else
+        Ark_LevelGr_UI.Text = "Auto Get Quest [OFF]"
+        Ark_LevelGr_UI.TextColor3 = ArkC_White
+    end
+end
+
+function Ark_TwC()
+    if Ark_CurrentTw then
+        Ark_CurrentTw:Cancel()
+    end
+end
+
+function ArkTw_Calculate(s_idx, e_idx, sp)
+    local dis = (e_idx - s_idx).magnitude
+    return dis / sp
+end
+
+function ArkCrt_TwIn4(s_idx, e_idx)
+    local dur = ArkTw_Calculate(s_idx, e_idx, Ark_Tws)
+    return TweenInfo.new(dur, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+end
+
+function ArkTw_P(Pos_x)
+    Ark_TwC()
+    local plr_pos = Ark_Plr.Character.HumanoidRootPart.Position
+    local goal = {CFrame = CFrame.new(Pos_x)}
+    local twi4 = ArkCrt_TwIn4(plr_pos, goal.CFrame.Position)
+    Ark_CurrentTw = Ark_TS:Create(Ark_Plr.Character.HumanoidRootPart, twi4, goal)
+    Ark_CurrentTw:Play()
+end
+
+function ArkCrt_Tag()
+    ArkCurrentTAG = false
+    for _, e in pairs(Ark_Ws.Enemies:GetChildren()) do
+        if e:IsA("Model") and e.Name == ArkNT_Custom[1] then
+            ArkCurrentTAG = true
+            break
+        end
+    end
+    
+    if ArkCurrentTAG then
+        return
+    end
+    
+    local ArkTAG_NearestE, ArkN_Dis, dis
+    ArkTAG_NearestE = nil
+    ArkN_Dis = math.huge
+    
+    for _, e in pairs(Ark_Ws.Enemies:GetChildren()) do
+        if e:IsA("Model") and e:FindFirstChild("HumanoidRootPart") then
+            dis = (Ark_Plr.Character.HumanoidRootPart.Position - e.HumanoidRootPart.Position).magnitude
+            
+            if dis < ArkN_Dis then
+                ArkN_Dis = dis
+                ArkTAG_NearestE = e
+            end
+        end
+    end
+    
+    if ArkTAG_NearestE then
+        ArkTAG_NearestE.Name = ArkNT_Custom[1]
+    end
+end
+
+function ArkFollow_N0()
+    local Ark_NearestE, Ark_NearestD, Ark_MaxiumD, dis
+    Ark_NearestE = nil
+    Ark_NearestD = math.huge
+    Ark_MaxiumD = 1000
+    
+    for _, e in pairs(Ark_Ws.Enemies:GetChildren()) do
+        if e:IsA("Model") and e:FindFirstChild("HumanoidRootPart") then
+            dis = (Ark_Plr.Character.HumanoidRootPart.Position - e.HumanoidRootPart.Position).magnitude
+            
+            if dis < Ark_NearestD and dis <= Ark_MaxiumD then
+                Ark_NearestD = dis
+                Ark_NearestE = e
+            end
+        end
+    end
+    
+    if Ark_NearestE and Ark_NearestE:FindFirstChild("Humanoid") then
+        local hum, e_pos, dir_behind, pos_behind
+        hum = Ark_NearestE.Humanoid
+        e_pos = Ark_NearestE.HumanoidRootPart.Position
+        dir_behind = (Ark_Plr.Character.HumanoidRootPart.Position - e_pos).unit
+        pos_behind = e_pos + (dir_behind * -0.5) + Ark_CurrentDir
+        
+        if hum.Health > 0 then
+            ArkTw_P(pos_behind)
+        else
+            Ark_NearestE.HumanoidRootPart.CFrame = Ark_Plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 900, 0)
+        end
+    end
+end
+
+function ArkFollow_N1()
+    local Ark_NearestE, Ark_NearestD, Ark_MaxiumD, dis
+    Ark_NearestE = nil
+    Ark_NearestD = math.huge
+    Ark_MaxiumD = 1000
+    
+    for _, e in pairs(Ark_Ws.Enemies:GetChildren()) do
+        if e:IsA("Model") and e:FindFirstChild("HumanoidRootPart") and e.Name == ArkNT_Custom[1] then
+            dis = (Ark_Plr.Character.HumanoidRootPart.Position - e.HumanoidRootPart.Position).magnitude
+            
+            if dis < Ark_NearestD and dis <= Ark_MaxiumD then
+                Ark_NearestD = dis
+                Ark_NearestE = e
+            end
+        end
+    end
+    
+    if Ark_NearestE and Ark_NearestE:FindFirstChild("Humanoid") then
+        local hum, e_pos, dir_behind, pos_behind
+        hum = Ark_NearestE.Humanoid
+        e_pos = Ark_NearestE.HumanoidRootPart.Position
+        dir_behind = (Ark_Plr.Character.HumanoidRootPart.Position - e_pos).unit
+        pos_behind = e_pos + (dir_behind * -0.5) + Ark_CurrentDir
+        
+        if hum.Health > 0 then
+            ArkTw_P(pos_behind)
+        else
+            Ark_NearestE.Name = "ClearTAG"
+            Ark_NearestE.HumanoidRootPart.CFrame = Ark_Plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 900, 0)
+        end
+    end
+end
+
+-- Auto Farm Level --
+
+local QuestName = nil
+local QuestLvl = nil
+local QuestPos = nil
+local QuestMob_Pos = nil
+local MobName = ""
+
+local nearestfarm_countinued = false
+
+local QuestName_Data = {
+    "MarineQuest",
+    "JungleQuest"
+}
+
+local QuestLvl_Data = {
+    1
+}
+
+local MobName_Data = {
+    "Trainee",
+    "Monkey"
+}
+
+local alrpick_0, alrpick_1, alrpick_2
+
+alrpick_0 = false
+alrpick_1 = false
+alrpick_2 = false
+
+function Ark_AutoEquipped(Haha)
+    for _, as in pairs(Ark_Plr.Backpack:GetChildren()) do
+        if as:IsA("Tool") then
+            if as.ToolTip == Haha then
+                Ark_Plr.Character.Humanoid:EquipTool(as)
+            end
+        end
+    end
+end
+
+function ArkQuest_UI(z, x, c, v)
+    if Ark_Plr.PlayerGui.Main.Quest.Visible == false then
+        alrpick_1 = false
+        alrpick_2 = false
+        if not alrpick_0 then
+            alrpick_0 = true
+            nearestfarm_countinued = true
+            Ark_TwC()
+        end
+        if Ark_Plr.Character and Ark_Plr.Character:FindFirstChild("HumanoidRootPart") then
+            local plr_pos = Ark_Plr.Character.HumanoidRootPart.Position
+            local goal = {CFrame = z}
+            local twi4 = ArkCrt_TwIn4(plr_pos, goal.CFrame.Position)
+            Ark_CurrentTw = Ark_TS:Create(Ark_Plr.Character.HumanoidRootPart, twi4, goal)
+            Ark_CurrentTw:Play()
+            if (Ark_Plr.Character.HumanoidRootPart.Position - z.Position).Magnitude <= 5 then
+                Ark_Rcs.Remotes.CommF_:InvokeServer("StartQuest", x, c)
+                print("success 1")
+            end
+        else
+            print("HRP not found.")
+        end
+    else
+        if not alrpick_1 then
+            alrpick_0 = false
+            alrpick_1 = true
+            Ark_TwC()
+        end
+        
+        if not alrpick_2 then
+            if Ark_Plr.Character and Ark_Plr.Character:FindFirstChild("HumanoidRootPart") then
+                local plr_pos = Ark_Plr.Character.HumanoidRootPart.Position
+                local goal = {CFrame = v}
+                local twi4 = ArkCrt_TwIn4(plr_pos, goal.CFrame.Position)
+                Ark_CurrentTw = Ark_TS:Create(Ark_Plr.Character.HumanoidRootPart, twi4, goal)
+                Ark_CurrentTw:Play()
+                if (Ark_Plr.Character.HumanoidRootPart.Position - v.Position).Magnitude <= 5 then
+                    print("success 2")
+                    nearestfarm_countinued = false
+                    alrpick_2 = true
+                end
+            else
+                print("HRP not found.")
+            end
+        end
+    end
+end
+
+function Ark_CheckLevel()
+    ArkPlr_Lvl = Ark_Plr.Data.Level.Value
+    if ArkPlr_Lvl == 1 or ArkPlr_Lvl <= 9 then
+        QuestName = QuestName_Data[1]
+        QuestLvl = QuestLvl_Data[1]
+        MobName = MobName_Data[1]
+        QuestPos = CFrame.new(-2711, 25, 2104)
+        QuestMob_Pos = CFrame.new(-2879, 101, 2189)
+    elseif ArkPlr_Lvl == 10 or ArkPlr_Lvl <= 15 then
+        QuestName = QuestName_Data[2]
+        QuestLvl = QuestLvl_Data[1]
+        MobName = MobName_Data[2]
+        QuestPos = CFrame.new(-1601, 37, 152)
+        QuestMob_Pos = CFrame.new(-1490, 88, 75)
+    elseif ArkPlr_Lvl == 15 or ArkPlr_Lvl <= 29 then
+        print("hi, this is a test")
+    end
+end
+
+function ArkFollow_N2(s_e)
+    local Ark_NearestE, Ark_NearestD, Ark_MaxiumD, dis
+    Ark_NearestE = nil
+    Ark_NearestD = math.huge
+    Ark_MaxiumD = 1000
+    
+    local ArkNewEnemies = Ark_Ws.Enemies:FindFirstChild(s_e)
+    if ArkNewEnemies and ArkNewEnemies:IsA("Model") and ArkNewEnemies:FindFirstChild("HumanoidRootPart") and ArkNewEnemies.Name == s_e then
+        dis = (Ark_Plr.Character.HumanoidRootPart.Position - ArkNewEnemies.HumanoidRootPart.Position).magnitude
+            
+        if dis < Ark_NearestD and dis <= Ark_MaxiumD then
+            Ark_NearestD = dis
+            Ark_NearestE = ArkNewEnemies
+        end
+    end
+    
+    if Ark_NearestE and Ark_NearestE:FindFirstChild("Humanoid") then
+        local hum, e_pos, dir_behind, pos_behind
+        hum = Ark_NearestE.Humanoid
+        e_pos = Ark_NearestE.HumanoidRootPart.Position
+        dir_behind = (Ark_Plr.Character.HumanoidRootPart.Position - e_pos).unit
+        pos_behind = e_pos + (dir_behind * -0.5) + Ark_CurrentDir
+        
+        if hum.Health > 0 then
+            ArkTw_P(pos_behind)
+        else
+            Ark_NearestE.HumanoidRootPart.CFrame = Ark_Plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 900, 0)
+        end
+    end
+end
+
+function ArkConnect_1()
+    Ark_AreToolx = Ark_AreToolx + 1
+    print(tonumber(Ark_AreToolx))
+    Ark_9Archive()
+    if Ark_AreToolx == 2 then
+        Ark_UseTool_UI.Text = "?"
+        CurrentTool = "Melee"
+    elseif Ark_AreToolx == 3 then
+        Ark_UseTool_UI.Text = "?"
+        CurrentTool = "Fruit"
+    elseif Ark_AreToolx == 4 then
+        Ark_UseTool_UI.Text = "?"
+        CurrentTool = "Sword"
+    elseif Ark_AreToolx == 5 then
+        Ark_UseTool_UI.Text = "?"
+        CurrentTool = "Gun"
+    elseif Ark_AreToolx >= 6 then
+        Ark_UseTool_UI.Text = "☠"
+        CurrentTool = "None"
+        Ark_AreToolx = 1
+    end
+end
+
+-- End --
+
+Ark_UI.MouseButton1Click:Connect(function()
+    if ArkUI_State then
+        ArkUI_State = false
+        Ark_Ability_Fr.Visible = false
+        ArkS_Button()
+        Ark_UI.Text = _G.Ark9_Language[1] or "Mini UI [OFF]"
+    else
+        ArkUI_State = true
+        Ark_Ability_Fr.Visible = true
+        ArkS_Button()
+        Ark_UI.Text = _G.Ark9_Language[2] or "Mini UI [ON]"
+    end
+    Ark_9Archive()
+end)
+
+Ark_LockUI.MouseButton1Click:Connect(function()
+    if ArkUI_IsLocked then
+        ArkUI_IsLocked = false
+        Ark_LockUI.Text = _G.Ark9_Language[3] or "?"
+        Ark_Fr.Draggable = true
+    else
+        ArkUI_IsLocked = true
+        Ark_LockUI.Text = _G.Ark9_Language[4] or "?"
+        Ark_Fr.Draggable = false
+    end
+end)
+
+Ark_FastAttack_UI.MouseButton1Click:Connect(function()
+    if Ark_Attack then
+        Ark_FastAttack_UI.Text = _G.Ark9_Language[5] or "Auto Attacking [OFF]"
+        Ark_FastAttack_UI.TextColor3 = ArkC_White
+        Ark_Attack = false
+        _G.Attack_Play = false
+    else
+        Ark_FastAttack_UI.Text = _G.Ark9_Language[6] or "Auto Attacking [ON]"
+        Ark_FastAttack_UI.TextColor3 = ArkC_Red
+        Ark_Attack = true
+        _G.Attack_Play = true
+    end
+    Ark_9Archive()
+end)
+
+Ark_FastAttack_Delay_UI.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local new_delay = tonumber(Ark_FastAttack_Delay_UI.Text)
+        _G.Attack_Delay = new_delay
+    end
+end)
+
+Ark_NearestFarm_UI.MouseButton1Click:Connect(function()
+    if Ark_Nearby then
+        Ark_Nearby = false
+        Ark_NearestFarm_UI.Text = _G.Ark9_Language[8] or "Auto Farm Nearest [OFF]"
+        Ark_NearestFarm_UI.TextColor3 = ArkC_White
+    else
+        Ark_Nearby = true
+        Ark_NearestFarm_UI.Text = _G.Ark9_Language[9] or "Auto Farm Nearest [ON]"
+        Ark_NearestFarm_UI.TextColor3 = ArkC_Green
+    end
+    Ark_9Archive()
+end)
+
+Ark_NearestFarm_ModeUI.MouseButton1Click:Connect(function()
+    Ark_NearbyMode = Ark_NearbyMode + 1
+    if Ark_NearbyMode == 1 then
+        Ark_NearestFarm_ModeUI.Text = _G.Ark9_Language[11] or "1️⃣"
+    elseif Ark_NearbyMode == 2 then
+        Ark_NearestFarm_ModeUI.Text = _G.Ark9_Language[10] or "0️⃣"
+        Ark_NearbyMode = 0
+    end
+end)
+
+Ark_Direction_UI.MouseButton1Click:Connect(function()
+    Ark_Dir = Ark_Dir + 1
+    if Ark_Dir == 1 then
+        Ark_Direction_UI.Text = _G.Ark9_Language[13] or "⬇️"
+        ArkDir_Orbit = false
+        Ark_CurrentDir = Vector3.new(0, -30, 0)
+    elseif Ark_Dir == 2 then
+        Ark_Direction_UI.Text = _G.Ark9_Language[14] or "?"
+        ArkDir_Orbit = true
+    elseif Ark_Dir == 3 then
+        Ark_Direction_UI.Text = _G.Ark9_Language[12] or "⬆️"
+        Ark_CurrentDir = Vector3.new(0, 30, 0)
+        Ark_Dir = 0
+        ArkDir_Orbit = false
+    end
+    Ark_9Archive()
+end)
+
+Ark_RequestAI.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local wis = Ark_RequestAI.Text
+        if ArkRAI_AI2 then
+            print(RequestAIChat("Hi, This is a Test", ""))
+        end
+        Ark_RequestAI.Text = ""
+    else
+        Ark_RequestAI:ReleaseFocus()
+    end
+end)
+
+Ark_LevelGr_UI.MouseButton1Click:Connect(function()
+    if Ark_LevelGr then
+        Ark_LevelGr = false
+        Ark_LevelGr_UI.Text = "Auto Get Quest [OFF]"
+        Ark_LevelGr_UI.TextColor3 = ArkC_White
+    else
+        Ark_LevelGr = true
+        Ark_LevelGr_UI.Text = "Auto Get Quest [ON]"
+        Ark_LevelGr_UI.TextColor3 = ArkC_Green
+    end
+    Ark_9Archive()
+end)
+
+Ark_UseTool_UI.MouseButton1Click:Connect(ArkConnect_1)
+
+_G.ArkNearest = Ark_RS.RenderStepped:Connect(function(deltaTime)
+    if Ark_Nearby then
+        if Ark_NearbyMode == 0 then
+            if ArkDir_Orbit then
+                ArkOrbit_Dir_F()
+            end
+            
+            if Ark_Dir == 1 then
+                Ark_CurrentDir = Vector3.new(0, -30, 0)
+            elseif Ark_Dir == 0 then
+                Ark_CurrentDir = Vector3.new(0, 30, 0)
+            end
+            
+            ArkB_Velocity()
+            if not Ark_LevelGr then
+                if not nearestfarm_countinued then
+                    ArkFollow_N0()
+                end
+            else
+                ArkFollow_N2(MobName)
+            end
+            ArkN_Object(Ark_Nearby)
+            ArkOP_Buso()
+        elseif Ark_NearbyMode == 1 then
+            if ArkDir_Orbit then
+                ArkOrbit_Dir_F()
+            end
+            
+            if Ark_Dir == 1 then
+                Ark_CurrentDir = Vector3.new(0, -30, 0)
+            elseif Ark_Dir == 0 then
+                Ark_CurrentDir = Vector3.new(0, 30, 0)
+            end
+            
+            ArkB_Velocity()
+            if not Ark_LevelGr then
+                if not nearestfarm_countinued then
+                    ArkCrt_Tag()
+                    ArkFollow_N1()
+                end
+            else
+                ArkCrt_Tag()
+                ArkFollow_N2(MobName)
+            end
+            ArkN_Object(Ark_Nearby)
+            ArkOP_Buso()
+        end
+    else
+        ArkB_ReVelocity()
+        ArkN_Object(Ark_Nearby)
+    end
+end)
+
+_G.ArkFarm = Ark_RS.RenderStepped:Connect(function()
+    if Ark_LevelGr then
+        Ark_CheckLevel()
+        ArkQuest_UI(QuestPos, QuestName, QuestLvl, QuestMob_Pos)
+    end
+    if Ark_AreToolx >= 2 then
+        Ark_AutoEquipped(CurrentTool)
+    end
+end)
+
+ArkS_LT()
+task.wait()
+print("Reading Data.")
+Ark_9Extract()
+task.wait()
+print("Done.")
+print("Script: " .. Ark_TotalLineOfCode .. " line.")
+print("Loaded Data.")
+
+-- Credit --
+
+-- [Bug] game:GetService("StarterGui"):SetCore("SendNotification", {
+--           Title = "《H.Hiền Script》",
+--           Text = "[Mini UI, Auto Farm (Fast Attacked)]",
+--           Duration = 1,
+--       })
+
+print("《H.Hiền Script》\n [Mini UI, Auto Farm (Fast Attacked)]")
+
+-- Api
