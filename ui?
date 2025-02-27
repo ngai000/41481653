@@ -4,7 +4,7 @@
 
 _G.Ark9_Language = {}
 
-if game:IsLoaded() and game.GameId == 994732206 then
+if game:IsLoaded() and game.GameId == 7449423635 then
     local pre = "Ark_FastAttacking"
     
     for _, GraphicalUserInterface in ipairs(game:GetService("CoreGui"):GetChildren()) do
