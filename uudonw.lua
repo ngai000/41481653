@@ -1,8 +1,16 @@
 -- Lấy dịch vụ cần thiết
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-
 -- ==================================================
+-- Xóa GUI cũ nếu đã tồn tại
+-- ==================================================
+local playerGui = player:WaitForChild("PlayerGui")
+
+local oldGui = playerGui:FindFirstChild("NoteGui")
+if oldGui then
+    oldGui:Destroy()
+end
+
 -- Cấu hình giao diện (Gọn gàng hơn)
 -- ==================================================
 local PADDING = 8 -- Khoảng cách đệm nhỏ hơn
@@ -61,6 +69,162 @@ local headerCorner = Instance.new("UICorner")
 headerCorner.CornerRadius = UDim.new(0, CORNER_RADIUS)
 headerCorner.Parent = headerContainer
 
+local listLayout = Instance.new("UIListLayout")
+listLayout.FillDirection = Enum.FillDirection.Vertical
+listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+listLayout.Padding = UDim.new(0, 2)
+listLayout.Parent = headerContainer
+
+local logoHeader = Instance.new("TextLabel")
+logoHeader.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT * 0.55)
+logoHeader.BackgroundTransparency = 1
+logoHeader.Text = "Trùm Cày Thuê: Ngài "
+logoHeader.TextColor3 = Color3.fromRGB(241, 250, 140)
+logoHeader.Font = Enum.Font.SourceSansBold
+logoHeader.TextSize = 20
+logoHeader.Parent = headerContainer
+
+local userHeader = Instance.new("TextLabel")
+userHeader.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT * 0.45)
+userHeader.BackgroundTransparency = 1
+userHeader.Text = "Username: " .. maskUsername(player.Name)
+userHeader.TextColor3 = Color3.fromRGB(189, 147, 249)
+userHeader.Font = Enum.Font.SourceSans
+userHeader.TextSize = 14
+userHeader.Parent = headerContainer
+
+-- Input Container
+local inputContainer = Instance.new("Frame")
+local inputHeight = FRAME_SIZE.Y - HEADER_HEIGHT - PADDING * 2
+inputContainer.Size = UDim2.fromOffset(FRAME_SIZE.X - PADDING * 2, inputHeight)
+inputContainer.Position = UDim2.new(0, PADDING, 0, HEADER_HEIGHT + PADDING)
+inputContainer.BackgroundTransparency = 1
+inputContainer.Parent = mainFrame
+
+local inputLayout = Instance.new("UIListLayout")
+inputLayout.FillDirection = Enum.FillDirection.Vertical
+inputLayout.Padding = UDim.new(0, PADDING)
+inputLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+inputLayout.SortOrder = Enum.SortOrder.LayoutOrder
+inputContainer.AutomaticSize = Enum.AutomaticSize.Y
+inputLayout.Parent = inputContainer
+
+-- Hàm tạo một dòng nhập liệu
+local function createInputRow(name, labelText, placeholderText)
+    local rowFrame = Instance.new("Frame")
+    rowFrame.Name = name .. "Row"
+    rowFrame.Size = UDim2.new(1, 0, 0, INPUT_HEIGHT)
+    rowFrame.BackgroundTransparency = 1
+    rowFrame.Parent = inputContainer
+    
+    local rowLayout = Instance.new("UIListLayout")
+    rowLayout.FillDirection = Enum.FillDirection.Horizontal
+    rowLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    rowLayout.Padding = UDim.new(0, PADDING/2)
+    rowLayout.Parent = rowFrame
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, LABEL_WIDTH, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Text = labelText
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = rowFrame
+
+    local textbox = Instance.new("TextBox")
+    textbox.Size = UDim2.new(1, -LABEL_WIDTH - PADDING/2, 1, 0)
+    textbox.BackgroundColor3 = Color3.fromRGB(68, 71, 90)
+    textbox.TextColor3 = Color3.fromRGB(248, 248, 242)
+    textbox.PlaceholderText = placeholderText
+    textbox.PlaceholderColor3 = Color3.fromRGB(140, 142, 163)
+    textbox.TextWrapped = true
+    textbox.ClearTextOnFocus = false
+    textbox.Font = Enum.Font.SourceSans
+    textbox.TextSize = 14
+    textbox.TextXAlignment = Enum.TextXAlignment.Left
+    textbox.TextYAlignment = Enum.TextYAlignment.Center
+    textbox.BorderSizePixel = 0
+    textbox.Parent = rowFrame
+
+    local textboxCorner = Instance.new("UICorner")
+    textboxCorner.CornerRadius = UDim.new(0, CORNER_RADIUS/2)
+    textboxCorner.Parent = textbox
+    
+    return textbox
+end
+
+-- Các dòng nhập liệu
+local orderBox = createInputRow("OrderBox", "📝 Đơn hàng:", "Nhập đơn hàng...")
+local noteBox = createInputRow("NoteBox", "✏️ Ghi chú:", "Nhập ghi chú...")
+local customerBox = createInputRow("CustomerBox", "👤 Người đặt:", "Nhập tên người đặt...")
+
+-- In ra console (giữ nguyên tên thật)
+local function onFocusLost(enterPressed)
+    if enterPressed then
+        print("--- Đơn Hàng Mới ---")
+        print("Người dùng Roblox: " .. player.Name)
+        print("Đơn hàng: " .. orderBox.Text)
+        print("Ghi chú: " .. noteBox.Text)
+        print("Người đặt: " .. customerBox.Text)
+        print("--------------------")
+    end
+end
+
+orderBox.FocusLost:Connect(onFocusLost)
+noteBox.FocusLost:Connect(onFocusLost)
+customerBox.FocusLost:Connect(onFocusLost)
+-- Buttons Container
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CommF = ReplicatedStorage.Remotes.CommF_
+
+local buttonContainer = Instance.new("Frame")
+buttonContainer.Size = UDim2.new(1, 0, 0, 40)
+buttonContainer.BackgroundTransparency = 1
+buttonContainer.LayoutOrder = 99
+buttonContainer.Parent = inputContainer
+
+local buttonLayout = Instance.new("UIListLayout")
+buttonLayout.FillDirection = Enum.FillDirection.Horizontal
+buttonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+buttonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+buttonLayout.Padding = UDim.new(0, PADDING)
+buttonLayout.Parent = buttonContainer
+
+-- Hàm tạo nút
+local function createButton(text, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.5, -PADDING, 1, 0)
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 14
+    btn.BorderSizePixel = 0
+    btn.AutoButtonColor = true
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, CORNER_RADIUS)
+    corner.Parent = btn
+
+    return btn
+end
+
+-- Nút Reset Stats
+local resetBtn = createButton("♻ Reset Stats", Color3.fromRGB(255, 85, 85))
+resetBtn.Parent = buttonContainer
+resetBtn.MouseButton1Click:Connect(function()
+    CommF:InvokeServer("BlackbeardReward", "Refund", "1")
+    CommF:InvokeServer("BlackbeardReward", "Refund", "2")
+end)
+
+-- Nút Reroll Race
+local rerollBtn = createButton("🔄 Reroll Race", Color3.fromRGB(80, 250, 123))
+rerollBtn.Parent = buttonContainer
+rerollBtn.MouseButton1Click:Connect(function()
+    CommF:InvokeServer("BlackbeardReward", "Reroll", "2")
+end)
 local listLayout = Instance.new("UIListLayout")
 listLayout.FillDirection = Enum.FillDirection.Vertical
 listLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
