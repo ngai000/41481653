@@ -167,3 +167,53 @@ end
 orderBox.FocusLost:Connect(onFocusLost)
 noteBox.FocusLost:Connect(onFocusLost)
 customerBox.FocusLost:Connect(onFocusLost)
+-- Buttons Container
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CommF = ReplicatedStorage.Remotes.CommF_
+
+local buttonContainer = Instance.new("Frame")
+buttonContainer.Size = UDim2.new(1, 0, 0, 40)
+buttonContainer.BackgroundTransparency = 1
+buttonContainer.LayoutOrder = 99
+buttonContainer.Parent = inputContainer
+
+local buttonLayout = Instance.new("UIListLayout")
+buttonLayout.FillDirection = Enum.FillDirection.Horizontal
+buttonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+buttonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+buttonLayout.Padding = UDim.new(0, PADDING)
+buttonLayout.Parent = buttonContainer
+
+-- Hàm tạo nút
+local function createButton(text, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.5, -PADDING, 1, 0)
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Text = text
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 14
+    btn.BorderSizePixel = 0
+    btn.AutoButtonColor = true
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, CORNER_RADIUS)
+    corner.Parent = btn
+
+    return btn
+end
+
+-- Nút Reset Stats
+local resetBtn = createButton("♻ Reset Stats", Color3.fromRGB(255, 85, 85))
+resetBtn.Parent = buttonContainer
+resetBtn.MouseButton1Click:Connect(function()
+    CommF:InvokeServer("BlackbeardReward", "Refund", "1")
+    CommF:InvokeServer("BlackbeardReward", "Refund", "2")
+end)
+
+-- Nút Reroll Race
+local rerollBtn = createButton("🔄 Reroll Race", Color3.fromRGB(80, 250, 123))
+rerollBtn.Parent = buttonContainer
+rerollBtn.MouseButton1Click:Connect(function()
+    CommF:InvokeServer("BlackbeardReward", "Reroll", "2")
+end)
