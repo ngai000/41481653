@@ -5,61 +5,175 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- ==================================================
--- 🔥 XÓA TOÀN BỘ GUI CŨ (FIX TRIỆT ĐỂ)
--- ==================================================
+-- Xóa GUI cũ
 for _, gui in ipairs(playerGui:GetChildren()) do
-    if gui:IsA("ScreenGui") and gui.Name == "NoteGui" then
+    if gui.Name == "NoteGui" then
         gui:Destroy()
     end
 end
-task.wait()
 
 -- ==================================================
--- Cấu hình giao diện (Gọn gàng hơn)
+-- Cấu hình màu sắc & kích thước
 -- ==================================================
-local PADDING = 8
-local HEADER_HEIGHT = 40
-local CORNER_RADIUS = 6
-local FRAME_SIZE = Vector2.new(300, 240)
-local INPUT_HEIGHT = 32
-local LABEL_WIDTH = 90
+local COLORS = {
+    BG = Color3.fromRGB(33, 34, 44),
+    HEADER = Color3.fromRGB(40, 42, 54),
+    INPUT = Color3.fromRGB(68, 71, 90),
+    TEXT = Color3.fromRGB(248, 248, 242),
+    ACCENT = Color3.fromRGB(189, 147, 249),
+    RED = Color3.fromRGB(255, 85, 85),
+    GREEN = Color3.fromRGB(80, 250, 123)
+}
 
 -- ==================================================
--- Hàm bảo mật username
--- ==================================================
-local function maskUsername(username)
-    if #username <= 4 then
-        return string.rep("*", #username)
-    else
-        return string.sub(username, 1, 4) .. string.rep("*", #username - 4)
-    end
-end
-
--- ==================================================
--- Tạo ScreenGui (NAME TRƯỚC - PARENT SAU)
+-- GUI Chính
 -- ==================================================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "NoteGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- ==================================================
--- Main Frame
--- ==================================================
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.fromOffset(FRAME_SIZE.X, FRAME_SIZE.Y)
-mainFrame.Position = UDim2.new(0.5, -FRAME_SIZE.X/2, 0.5, -FRAME_SIZE.Y/2)
-mainFrame.BackgroundColor3 = Color3.fromRGB(40, 42, 54)
+mainFrame.Size = UDim2.fromOffset(320, 280) -- Tăng nhẹ chiều cao để thoải mái
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -140)
+mainFrame.BackgroundColor3 = COLORS.BG
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, CORNER_RADIUS)
-
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 8)
 local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(68, 71, 90)
+stroke.Color = COLORS.INPUT
+stroke.Thickness = 2
+stroke.Parent = mainFrame
+
+-- Layout chính cho Main Frame
+local mainLayout = Instance.new("UIListLayout")
+mainLayout.Padding = UDim.new(0, 10)
+mainLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+mainLayout.SortOrder = Enum.SortOrder.LayoutOrder
+mainLayout.Parent = mainFrame
+
+-- ==================================================
+-- Header Section
+-- ==================================================
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 50)
+header.BackgroundColor3 = COLORS.HEADER
+header.LayoutOrder = 1
+header.Parent = mainFrame
+
+Instance.new("UICorner", header).CornerRadius = UDim.new(0, 8)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0.6, 0)
+title.BackgroundTransparency = 1
+title.Text = "TRÙM CÀY THUÊ"
+title.TextColor3 = Color3.fromRGB(241, 250, 140)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.Parent = header
+
+local subTitle = Instance.new("TextLabel")
+subTitle.Size = UDim2.new(1, 0, 0.4, 0)
+subTitle.Position = UDim2.new(0, 0, 0.55, 0)
+subTitle.BackgroundTransparency = 1
+subTitle.Text = "User: " .. player.Name:sub(1, 4) .. "****"
+subTitle.TextColor3 = COLORS.ACCENT
+subTitle.Font = Enum.Font.SourceSansItalic
+subTitle.TextSize = 14
+subTitle.Parent = header
+
+-- ==================================================
+-- Body Section (Chứa Input & Buttons)
+-- ==================================================
+local body = Instance.new("Frame")
+body.Size = UDim2.new(0.9, 0, 0, 200)
+body.BackgroundTransparency = 1
+body.LayoutOrder = 2
+body.Parent = mainFrame
+
+local bodyLayout = Instance.new("UIListLayout")
+bodyLayout.Padding = UDim.new(0, 8)
+bodyLayout.Parent = body
+
+-- Hàm tạo hàng nhập liệu
+local function createInput(labelName, placeholder)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 35)
+    frame.BackgroundTransparency = 1
+    frame.Parent = body
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.35, 0, 1, 0)
+    lbl.Text = labelName
+    lbl.TextColor3 = Color3.new(1,1,1)
+    lbl.Font = Enum.Font.SourceSansBold
+    lbl.TextSize = 14
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.BackgroundTransparency = 1
+    lbl.Parent = frame
+
+    local txt = Instance.new("TextBox")
+    txt.Size = UDim2.new(0.65, 0, 1, 0)
+    txt.Position = UDim2.new(0.35, 0, 0, 0)
+    txt.BackgroundColor3 = COLORS.INPUT
+    txt.TextColor3 = COLORS.TEXT
+    txt.PlaceholderText = placeholder
+    txt.Text = ""
+    txt.Font = Enum.Font.SourceSans
+    txt.TextSize = 14
+    txt.Parent = frame
+    Instance.new("UICorner", txt).CornerRadius = UDim.new(0, 4)
+    
+    return txt
+end
+
+local orderBox = createInput("📝 Đơn hàng:", "Tên dịch vụ...")
+local noteBox = createInput("✏️ Ghi chú:", "Lưu ý...")
+local customerBox = createInput("👤 Khách:", "Tên khách hàng...")
+
+-- ==================================================
+-- Buttons Section
+-- ==================================================
+local btnFrame = Instance.new("Frame")
+btnFrame.Size = UDim2.new(1, 0, 0, 40)
+btnFrame.BackgroundTransparency = 1
+btnFrame.Parent = body
+
+local btnLayout = Instance.new("UIListLayout")
+btnLayout.FillDirection = Enum.FillDirection.Horizontal
+btnLayout.Padding = UDim.new(0, 10)
+btnLayout.Parent = btnFrame
+
+local function makeBtn(text, color)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0.5, -5, 1, 0)
+    b.BackgroundColor3 = color
+    b.Text = text
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 14
+    b.Parent = btnFrame
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    return b
+end
+
+local resetBtn = makeBtn("♻ Reset Stats", COLORS.RED)
+local rerollBtn = makeBtn("🔄 Reroll Race", COLORS.GREEN)
+
+-- Logic Buttons
+local CommF = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_")
+
+resetBtn.MouseButton1Click:Connect(function()
+    CommF:InvokeServer("BlackbeardReward", "Refund", "1")
+    CommF:InvokeServer("BlackbeardReward", "Refund", "2")
+end)
+
+rerollBtn.MouseButton1Click:Connect(function()
+    CommF:InvokeServer("BlackbeardReward", "Reroll", "2")
+end)
 stroke.Thickness = 1
 stroke.Parent = mainFrame
 
