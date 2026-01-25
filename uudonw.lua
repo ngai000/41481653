@@ -1,27 +1,32 @@
+-- ==================================================
 -- Lấy dịch vụ cần thiết
+-- ==================================================
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
--- ==================================================
--- Xóa GUI cũ nếu đã tồn tại
--- ==================================================
 local playerGui = player:WaitForChild("PlayerGui")
 
-local oldGui = playerGui:FindFirstChild("NoteGui")
-if oldGui then
-    oldGui:Destroy()
+-- ==================================================
+-- 🔥 XÓA TOÀN BỘ GUI CŨ (FIX TRIỆT ĐỂ)
+-- ==================================================
+for _, gui in ipairs(playerGui:GetChildren()) do
+    if gui:IsA("ScreenGui") and gui.Name == "NoteGui" then
+        gui:Destroy()
+    end
 end
+task.wait()
 
+-- ==================================================
 -- Cấu hình giao diện (Gọn gàng hơn)
 -- ==================================================
-local PADDING = 8 -- Khoảng cách đệm nhỏ hơn
-local HEADER_HEIGHT = 40 -- Giảm chiều cao header
-local CORNER_RADIUS = 6 -- Viền bo gọn hơn
-local FRAME_SIZE = Vector2.new(300, 240) -- Khung chính nhỏ gọn
-local INPUT_HEIGHT = 32 -- Giảm chiều cao ô nhập liệu
-local LABEL_WIDTH = 90 -- Giữ nhãn đủ rộng
+local PADDING = 8
+local HEADER_HEIGHT = 40
+local CORNER_RADIUS = 6
+local FRAME_SIZE = Vector2.new(300, 240)
+local INPUT_HEIGHT = 32
+local LABEL_WIDTH = 90
 
 -- ==================================================
--- Hàm bảo mật username (ẩn bớt ký tự khi hiển thị GUI)
+-- Hàm bảo mật username
 -- ==================================================
 local function maskUsername(username)
     if #username <= 4 then
@@ -32,15 +37,17 @@ local function maskUsername(username)
 end
 
 -- ==================================================
--- Bắt đầu tạo giao diện
+-- Tạo ScreenGui (NAME TRƯỚC - PARENT SAU)
 -- ==================================================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "NoteGui"
 screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Parent = playerGui
 
+-- ==================================================
+-- Main Frame
+-- ==================================================
 local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.fromOffset(FRAME_SIZE.X, FRAME_SIZE.Y)
 mainFrame.Position = UDim2.new(0.5, -FRAME_SIZE.X/2, 0.5, -FRAME_SIZE.Y/2)
 mainFrame.BackgroundColor3 = Color3.fromRGB(40, 42, 54)
@@ -49,18 +56,145 @@ mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
-local mainFrameCorner = Instance.new("UICorner")
-mainFrameCorner.CornerRadius = UDim.new(0, CORNER_RADIUS)
-mainFrameCorner.Parent = mainFrame
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, CORNER_RADIUS)
 
-local mainFrameStroke = Instance.new("UIStroke")
-mainFrameStroke.Color = Color3.fromRGB(68, 71, 90)
-mainFrameStroke.Thickness = 1
-mainFrameStroke.Parent = mainFrame
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(68, 71, 90)
+stroke.Thickness = 1
+stroke.Parent = mainFrame
 
+-- ==================================================
 -- Header
+-- ==================================================
 local headerContainer = Instance.new("Frame")
 headerContainer.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT)
+headerContainer.BackgroundColor3 = Color3.fromRGB(30, 31, 40)
+headerContainer.BorderSizePixel = 0
+headerContainer.Parent = mainFrame
+
+Instance.new("UICorner", headerContainer).CornerRadius = UDim.new(0, CORNER_RADIUS)
+
+local headerLayout = Instance.new("UIListLayout")
+headerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+headerLayout.Padding = UDim.new(0, 2)
+headerLayout.Parent = headerContainer
+
+local logoHeader = Instance.new("TextLabel")
+logoHeader.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT * 0.55)
+logoHeader.BackgroundTransparency = 1
+logoHeader.Text = "Trùm Cày Thuê: Ngài "
+logoHeader.TextColor3 = Color3.fromRGB(241, 250, 140)
+logoHeader.Font = Enum.Font.SourceSansBold
+logoHeader.TextSize = 20
+logoHeader.Parent = headerContainer
+
+local userHeader = Instance.new("TextLabel")
+userHeader.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT * 0.45)
+userHeader.BackgroundTransparency = 1
+userHeader.Text = "Username: " .. maskUsername(player.Name)
+userHeader.TextColor3 = Color3.fromRGB(189, 147, 249)
+userHeader.Font = Enum.Font.SourceSans
+userHeader.TextSize = 14
+userHeader.Parent = headerContainer
+
+-- ==================================================
+-- Input Container
+-- ==================================================
+local inputContainer = Instance.new("Frame")
+inputContainer.Size = UDim2.fromOffset(FRAME_SIZE.X - PADDING*2, FRAME_SIZE.Y)
+inputContainer.Position = UDim2.new(0, PADDING, 0, HEADER_HEIGHT + PADDING)
+inputContainer.BackgroundTransparency = 1
+inputContainer.Parent = mainFrame
+
+local inputLayout = Instance.new("UIListLayout")
+inputLayout.Padding = UDim.new(0, PADDING)
+inputLayout.Parent = inputContainer
+
+-- ==================================================
+-- Hàm tạo input
+-- ==================================================
+local function createInputRow(labelText, placeholder)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, INPUT_HEIGHT)
+    row.BackgroundTransparency = 1
+    row.Parent = inputContainer
+
+    local layout = Instance.new("UIListLayout")
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.Padding = UDim.new(0, PADDING/2)
+    layout.Parent = row
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, LABEL_WIDTH, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = labelText
+    label.TextColor3 = Color3.new(1,1,1)
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 14
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = row
+
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, -LABEL_WIDTH, 1, 0)
+    box.BackgroundColor3 = Color3.fromRGB(68, 71, 90)
+    box.TextColor3 = Color3.fromRGB(248, 248, 242)
+    box.PlaceholderText = placeholder
+    box.Font = Enum.Font.SourceSans
+    box.TextSize = 14
+    box.BorderSizePixel = 0
+    box.ClearTextOnFocus = false
+    box.Parent = row
+
+    Instance.new("UICorner", box).CornerRadius = UDim.new(0, CORNER_RADIUS/2)
+
+    return box
+end
+
+local orderBox = createInputRow("📝 Đơn hàng:", "Nhập đơn hàng...")
+local noteBox = createInputRow("✏️ Ghi chú:", "Nhập ghi chú...")
+local customerBox = createInputRow("👤 Người đặt:", "Nhập tên người đặt...")
+
+-- ==================================================
+-- Buttons
+-- ==================================================
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CommF = ReplicatedStorage.Remotes.CommF_
+
+local buttonRow = Instance.new("Frame")
+buttonRow.Size = UDim2.new(1, 0, 0, 40)
+buttonRow.BackgroundTransparency = 1
+buttonRow.Parent = inputContainer
+
+local buttonLayout = Instance.new("UIListLayout")
+buttonLayout.FillDirection = Enum.FillDirection.Horizontal
+buttonLayout.Padding = UDim.new(0, PADDING)
+buttonLayout.Parent = buttonRow
+
+local function createButton(text, color)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.5, -PADDING, 1, 0)
+    btn.Text = text
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 14
+    btn.BorderSizePixel = 0
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, CORNER_RADIUS)
+    return btn
+end
+
+local resetBtn = createButton("♻ Reset Stats", Color3.fromRGB(255, 85, 85))
+resetBtn.Parent = buttonRow
+resetBtn.MouseButton1Click:Connect(function()
+    CommF:InvokeServer("BlackbeardReward", "Refund", "1")
+    CommF:InvokeServer("BlackbeardReward", "Refund", "2")
+end)
+
+local rerollBtn = createButton("🔄 Reroll Race", Color3.fromRGB(80, 250, 123))
+rerollBtn.Parent = buttonRow
+rerollBtn.MouseButton1Click:Connect(function()
+    CommF:InvokeServer("BlackbeardReward", "Reroll", "2")
+end)headerContainer.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT)
 headerContainer.BackgroundColor3 = Color3.fromRGB(30, 31, 40)
 headerContainer.BorderSizePixel = 0
 headerContainer.Parent = mainFrame
