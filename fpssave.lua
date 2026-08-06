@@ -51,14 +51,16 @@ else
 end
 
 -- Clean old UI if re-executed
-if ParentTarget:FindFirstChild("FPS_Ping_Tracker_" .. tostring(UserId)) then
-    ParentTarget["FPS_Ping_Tracker_" .. tostring(UserId)]:Destroy()
+local guiName = "FPS_Ping_Tracker_" .. tostring(UserId)
+if ParentTarget:FindFirstChild(guiName) then
+    ParentTarget[guiName]:Destroy()
 end
 
 -- UI Setup
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FPS_Ping_Tracker_" .. tostring(UserId)
+ScreenGui.Name = guiName
 ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true -- tránh lệch vị trí do status bar / notch trên mobile
 ScreenGui.Parent = ParentTarget
 
 local MainFrame = Instance.new("Frame")
@@ -88,17 +90,28 @@ TextLabel.Font = Enum.Font.GothamBold
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.TextSize = 13
 TextLabel.Text = "FPS: ... | Ping: ..."
-TextLabel.Active = false -- FIX: Bỏ active để không chặn raycast input kéo thả của MainFrame
+TextLabel.Active = false -- không chặn raycast input kéo thả của MainFrame
 TextLabel.Parent = MainFrame
 
 ---------------------------------------------------------
--- FIX LỖI KÉO THẢ (Drag Engine mới)
+-- FIX KÉO THẢ (hỗ trợ cả chuột lẫn cảm ứng - mobile)
 ---------------------------------------------------------
 local dragging = false
 local dragInput, dragStart, startPos
 
+local function updateDrag(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
+
 MainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = MainFrame.Position
@@ -115,48 +128,71 @@ MainFrame.InputBegan:Connect(function(input)
 end)
 
 MainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
         dragInput = input
+        if dragging then
+            updateDrag(input)
+        end
     end
 end)
 
+-- Chuột: theo dõi qua UserInputService (vì chuột có thể ra khỏi frame khi kéo)
 UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(
-            startPos.X.Scale, 
-            startPos.X.Offset + delta.X, 
-            startPos.Y.Scale, 
-            startPos.Y.Offset + delta.Y
-        )
+    if dragging and input == dragInput and input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateDrag(input)
+    end
+end)
+
+-- Cảm ứng (mobile): dùng TouchMoved riêng vì Touch trên mobile
+-- không luôn báo cập nhật ổn định qua InputChanged như chuột.
+UserInputService.TouchMoved:Connect(function(touch, gameProcessedEvent)
+    if dragging then
+        updateDrag(touch)
     end
 end)
 
 ---------------------------------------------------------
--- FIX LỖI FPS & PING (Thay đổi cơ chế đo)
+-- FIX FPS & PING (cập nhật ổn định, không phụ thuộc "task" lib)
 ---------------------------------------------------------
+local frameCount = 0
 local fpsCalculated = 0
-local timeAcc = 0
+local fpsTimer = 0
 
--- Tính FPS theo DeltaTime thực tế của frame
 RunService.RenderStepped:Connect(function(deltaTime)
-    fpsCalculated = math.floor(1 / deltaTime)
+    frameCount = frameCount + 1
+    fpsTimer = fpsTimer + deltaTime
+    if fpsTimer >= 1 then
+        fpsCalculated = frameCount
+        frameCount = 0
+        fpsTimer = 0
+    end
 end)
 
--- Loop riêng cập nhật UI định kỳ 0.5s (hoạt động tốt cả khi tab ẩn/chạy ẩn)
-task.spawn(function()
-    while task.wait(0.5) do
+-- Dùng spawn thường thay vì task.spawn để tương thích rộng hơn
+-- (một số executor cũ không có "task" library -> task.spawn = nil -> lỗi im lặng,
+-- khiến vòng lặp cập nhật UI không bao giờ chạy, đây là nguyên nhân chính khiến
+-- FPS/Ping không hiển thị gì cả).
+local spawnFn = (task and task.spawn) or spawn
+local waitFn = (task and task.wait) or wait
+
+spawnFn(function()
+    while true do
+        waitFn(0.5)
+
         local ping = 0
-        pcall(function()
+        local ok = pcall(function()
             ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
         end)
+        if not ok then
+            ping = -1 -- báo hiệu không lấy được ping, thay vì im lặng để 0
+        end
 
-        TextLabel.Text = string.format("FPS: %d  |  Ping: %dms", fpsCalculated, ping)
+        local pingText = ping >= 0 and (tostring(ping) .. "ms") or "N/A"
+        TextLabel.Text = string.format("FPS: %d  |  Ping: %s", fpsCalculated, pingText)
 
-        -- Đổi màu chỉ báo
-        if fpsCalculated < 30 or ping > 200 then
+        if fpsCalculated < 30 or (ping > 200) then
             TextLabel.TextColor3 = Color3.fromRGB(255, 85, 85)
-        elseif fpsCalculated < 50 or ping > 100 then
+        elseif fpsCalculated < 50 or (ping > 100) then
             TextLabel.TextColor3 = Color3.fromRGB(255, 220, 85)
         else
             TextLabel.TextColor3 = Color3.fromRGB(85, 255, 127)
