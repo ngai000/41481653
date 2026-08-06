@@ -9,10 +9,10 @@ local LocalPlayer = Players.LocalPlayer
 local UserId = LocalPlayer.UserId
 local ConfigFileName = "FPS_Ping_Pos_" .. tostring(UserId) .. ".json"
 
--- Default Position (Bottom-Right / Top-Right tùy chỉnh)
+-- Default Position
 local defaultPos = {XScale = 0.85, XOffset = 0, YScale = 0.05, YOffset = 0}
 
--- Hàm load vị trí đã lưu của acc này
+-- Read / Save File Config
 local function loadSavedPosition()
     if isfile and readfile and isfile(ConfigFileName) then
         local success, result = pcall(function()
@@ -25,7 +25,6 @@ local function loadSavedPosition()
     return UDim2.new(defaultPos.XScale, defaultPos.XOffset, defaultPos.YScale, defaultPos.YOffset)
 end
 
--- Hàm lưu vị trí mới cho acc này
 local function savePosition(udim2)
     if writefile then
         local data = {
@@ -40,29 +39,37 @@ local function savePosition(udim2)
     end
 end
 
+-- UI Parent Protection
+local ParentTarget
+if gethui then
+    ParentTarget = gethui()
+elseif syn and syn.protect_gui then
+    ParentTarget = game:GetService("CoreGui")
+    pcall(syn.protect_gui, ParentTarget)
+else
+    ParentTarget = LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- Clean old UI if re-executed
+if ParentTarget:FindFirstChild("FPS_Ping_Tracker_" .. tostring(UserId)) then
+    ParentTarget["FPS_Ping_Tracker_" .. tostring(UserId)]:Destroy()
+end
+
 -- UI Setup
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "FPS_Ping_Tracker_" .. tostring(UserId)
 ScreenGui.ResetOnSpawn = false
-
--- Bảo vệ UI khỏi bị game detect cơ bản (nếu executor hỗ trợ)
-if gethui then
-    ScreenGui.Parent = gethui()
-elseif syn and syn.protect_gui then
-    syn.protect_gui(ScreenGui)
-    ScreenGui.Parent = CoreGui
-else
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-end
+ScreenGui.Parent = ParentTarget
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 160, 0, 50)
+MainFrame.Size = UDim2.new(0, 160, 0, 40)
 MainFrame.Position = loadSavedPosition()
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BackgroundTransparency = 0.25
+MainFrame.BackgroundTransparency = 0.2
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
+MainFrame.Selectable = true
 MainFrame.Parent = ScreenGui
 
 local UICorner = Instance.new("UICorner")
@@ -70,7 +77,7 @@ UICorner.CornerRadius = UDim2.new(0, 8)
 UICorner.Parent = MainFrame
 
 local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(60, 60, 60)
+UIStroke.Color = Color3.fromRGB(70, 70, 70)
 UIStroke.Thickness = 1
 UIStroke.Parent = MainFrame
 
@@ -80,35 +87,28 @@ TextLabel.BackgroundTransparency = 1
 TextLabel.Font = Enum.Font.GothamBold
 TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextLabel.TextSize = 13
-TextLabel.Text = "FPS: -- | Ping: --ms"
+TextLabel.Text = "FPS: ... | Ping: ..."
+TextLabel.Active = false -- FIX: Bỏ active để không chặn raycast input kéo thả của MainFrame
 TextLabel.Parent = MainFrame
 
--- Logic Kéo Thả (Drag & Drop) + Lưu Tọa Độ
+---------------------------------------------------------
+-- FIX LỖI KÉO THẢ (Drag Engine mới)
+---------------------------------------------------------
 local dragging = false
 local dragInput, dragStart, startPos
-
-local function updateDrag(input)
-    local delta = input.Position - dragStart
-    local newPos = UDim2.new(
-        startPos.X.Scale, 
-        startPos.X.Offset + delta.X, 
-        startPos.Y.Scale, 
-        startPos.Y.Offset + delta.Y
-    )
-    MainFrame.Position = newPos
-    return newPos
-end
 
 MainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = MainFrame.Position
-        
-        input.Changed:Connect(function()
+
+        local connection
+        connection = input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
-                savePosition(MainFrame.Position) -- Lưu vị trí ngay khi buông chuột/tay
+                connection:Disconnect()
+                savePosition(MainFrame.Position)
             end
         end)
     end
@@ -122,35 +122,41 @@ end)
 
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
-        updateDrag(input)
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X, 
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
--- Logic Cập Nhật FPS & Ping
-local frameCount = 0
-local lastUpdate = tick()
+---------------------------------------------------------
+-- FIX LỖI FPS & PING (Thay đổi cơ chế đo)
+---------------------------------------------------------
+local fpsCalculated = 0
+local timeAcc = 0
 
-RunService.RenderStepped:Connect(function()
-    frameCount = frameCount + 1
-    local currentTime = tick()
-    
-    if currentTime - lastUpdate >= 0.5 then -- Cập nhật mỗi 0.5s để tránh giật lag UI
-        local fps = math.floor(frameCount / (currentTime - lastUpdate))
-        frameCount = 0
-        lastUpdate = currentTime
-        
-        -- Lấy Ping chuẩn từ PerformanceStats
+-- Tính FPS theo DeltaTime thực tế của frame
+RunService.RenderStepped:Connect(function(deltaTime)
+    fpsCalculated = math.floor(1 / deltaTime)
+end)
+
+-- Loop riêng cập nhật UI định kỳ 0.5s (hoạt động tốt cả khi tab ẩn/chạy ẩn)
+task.spawn(function()
+    while task.wait(0.5) do
         local ping = 0
         pcall(function()
             ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
         end)
-        
-        TextLabel.Text = string.format("FPS: %d  |  Ping: %dms", fps, ping)
-        
-        -- Đổi màu chữ theo chất lượng mạng/FPS
-        if fps < 30 or ping > 200 then
+
+        TextLabel.Text = string.format("FPS: %d  |  Ping: %dms", fpsCalculated, ping)
+
+        -- Đổi màu chỉ báo
+        if fpsCalculated < 30 or ping > 200 then
             TextLabel.TextColor3 = Color3.fromRGB(255, 85, 85)
-        elseif fps < 50 or ping > 100 then
+        elseif fpsCalculated < 50 or ping > 100 then
             TextLabel.TextColor3 = Color3.fromRGB(255, 220, 85)
         else
             TextLabel.TextColor3 = Color3.fromRGB(85, 255, 127)
