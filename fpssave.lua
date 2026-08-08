@@ -4,24 +4,25 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
-local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local Locations = Workspace:WaitForChild("_WorldOrigin"):WaitForChild("Locations")
 
--- Cấu hình mặc định
+-- Config
 _G.HighestMirage = true
-_G.TPGEAR = true          -- Bật/Tắt tự động tìm & bay đến Gear
-_G.AutoInteractGear = true -- Bật/Tắt tự động nhặt/kích hoạt Gear khi lại gần
+_G.TPGEAR = true          
+_G.AutoInteractGear = true 
 
 local TWEEN_SPEED = 300
 
 local MirageHighlight = nil
 local MirageBillboard = nil
 local DistanceConnection = nil
+local NoclipConnection = nil
 local MirageDetected = false
 local CurrentTween = nil
 local IsArrived = false
+local FloatBV = nil
 
 local function Notify(title, text)
     pcall(function()
@@ -33,7 +34,55 @@ local function Notify(title, text)
     end)
 end
 
--- 1. Xóa Sương Mù (Clear Fog)
+-- 1. Quản lý Noclip & Float
+local function EnableNoclipAndFloat()
+    if not NoclipConnection then
+        NoclipConnection = RunService.Stepped:Connect(function()
+            if LocalPlayer.Character then
+                for _, part in pairs(LocalPlayer.Character:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    end
+
+    local character = LocalPlayer.Character
+    if character then
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            if not FloatBV or FloatBV.Parent ~= hrp then
+                if FloatBV then FloatBV:Destroy() end
+                FloatBV = Instance.new("BodyVelocity")
+                FloatBV.Name = "MirageFloatVelocity"
+                FloatBV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                FloatBV.Velocity = Vector3.zero
+                FloatBV.Parent = hrp
+            end
+        end
+    end
+end
+
+local function DisableNoclipAndFloat()
+    if NoclipConnection then
+        NoclipConnection:Disconnect()
+        NoclipConnection = nil
+    end
+    if FloatBV then
+        FloatBV:Destroy()
+        FloatBV = nil
+    end
+    if LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetChildren()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.CanCollide = true
+            end
+        end
+    end
+end
+
+-- 2. Clear Fog
 local function ClearFog()
     pcall(function()
         Lighting.FogEnd = 9e9
@@ -58,6 +107,7 @@ Lighting.ChildAdded:Connect(function(child)
 end)
 
 local function CleanupESP()
+    DisableNoclipAndFloat()
     if DistanceConnection then
         DistanceConnection:Disconnect()
         DistanceConnection = nil
@@ -77,7 +127,7 @@ local function CleanupESP()
     IsArrived = false
 end
 
--- 2. Hàm Tween Di Chuyển
+-- 3. Hàm Tween Di Chuyển
 local function TweenTo(targetCFrame)
     local character = LocalPlayer.Character
     if not character then return end
@@ -85,13 +135,19 @@ local function TweenTo(targetCFrame)
     if not hrp then return end
 
     local distance = (hrp.Position - targetCFrame.Position).Magnitude
+    
+    -- Nếu đã đến phạm vi đích: Tắt Tween + Tắt Noclip & Float để di chuyển tự do
     if distance <= 10 then
         if CurrentTween then
             CurrentTween:Cancel()
             CurrentTween = nil
         end
-        return true -- Trả về true nếu đã tới nơi
+        DisableNoclipAndFloat()
+        return true
     end
+
+    -- Đang trong quá trình bay -> Bật Noclip & Float
+    EnableNoclipAndFloat()
 
     local time = distance / TWEEN_SPEED
     local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
@@ -105,7 +161,7 @@ local function TweenTo(targetCFrame)
     return false
 end
 
--- 3. ESP Mirage Island
+-- 4. ESP Mirage Island
 local function CreateMirageESP()
     CleanupESP()
 
@@ -170,7 +226,7 @@ local function CheckMirage()
     end
 end
 
--- 4. Tạo UI Nút Bật/Tắt Tự Nhặt Gear (Dành cho Cả Mobile & PC)
+-- 5. UI Nút Auto Gear Toggle
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "GearToggleGui"
 ScreenGui.ResetOnSpawn = false
@@ -208,13 +264,13 @@ ToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 5. Task Tự Động Bay & Nhặt Gear / Bay Đỉnh Đảo
+-- 6. Task Logic Vận Hành
 task.spawn(function()
-    while task.wait(0.2) do
+    while task.wait(0.1) do
         if Locations:FindFirstChild("Mirage Island") then
             local gearFound = false
 
-            -- Ưu tiên 1: Tự tìm & Bay đến Gear
+            -- 1. Ưu tiên: Tự động nhặt Gear khi xuất hiện
             if _G.TPGEAR then
                 pcall(function()
                     local mysticIsland = Workspace.Map:FindFirstChild("MysticIsland")
@@ -224,7 +280,7 @@ task.spawn(function()
                                 gearFound = true
                                 local arrived = TweenTo(part.CFrame * CFrame.new(0, 2, 0))
                                 
-                                -- Tự động nhặt / Tương tác ProximityPrompt khi đến gần
+                                -- Tự động nhặt Gear khi đã ở khoảng cách tương tác
                                 if arrived or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude <= 15) then
                                     if _G.AutoInteractGear then
                                         for _, prompt in pairs(part:GetDescendants()) do
@@ -241,30 +297,35 @@ task.spawn(function()
                 end)
             end
 
-            -- Ưu tiên 2: Bay lên đỉnh đảo Mirage nếu không thấy Gear
+            -- 2. Nếu chưa tới đỉnh đảo & chưa thấy Gear: Bay lên đỉnh
             if not gearFound and _G.HighestMirage and not IsArrived then
                 pcall(function()
                     local mapMystic = Workspace.Map:FindFirstChild("MysticIsland")
                     if mapMystic and mapMystic:FindFirstChild("Center") then
                         local targetPos = mapMystic.Center.CFrame * CFrame.new(0, 400, 0)
                         local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if hrp and (hrp.Position - targetPos.Position).Magnitude <= 15 then
+                        
+                        if hrp and (hrp.Position - targetPos.Position).Magnitude <= 10 then
                             IsArrived = true
-                            if CurrentTween then CurrentTween:Cancel() end
+                            if CurrentTween then 
+                                CurrentTween:Cancel() 
+                                CurrentTween = nil
+                            end
+                            DisableNoclipAndFloat() -- Tắt hoàn toàn Noclip/Float để di chuyển bình thường
                         else
                             TweenTo(targetPos)
                         end
                     end
                 end)
             end
+        else
+            DisableNoclipAndFloat()
         end
     end
 end)
 
--- Khởi chạy No Fog
+-- Khởi chạy ban đầu
 ClearFog()
-
--- Khởi chạy kiểm tra Mirage
 CheckMirage()
 
 Locations.ChildAdded:Connect(function(child)
@@ -280,7 +341,6 @@ Locations.ChildRemoved:Connect(function(child)
     end
 end)
 
--- Loop duy trì Clear Fog & Check
 task.spawn(function()
     while task.wait(1) do
         CheckMirage()
