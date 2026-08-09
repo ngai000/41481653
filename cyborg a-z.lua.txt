@@ -1003,6 +1003,35 @@ local function RunMainScript()
 						local GetMapIndexRef3 = GetMapIndex
 						local logFileNameRef2 = logFileName
 
+						-- Danh sách trái rẻ (< 1M Beli) dùng để dò khi remote getInventory đã bị obfuscate
+						local CHEAP_FRUIT_IDS = {
+							"Rocket-Rocket", "Spin-Spin", "Chop-Chop", "Spring-Spring", "Bomb-Bomb",
+							"Smoke-Smoke", "Spike-Spike", "Flame-Flame", "Falcon-Falcon", "Ice-Ice",
+							"Sand-Sand", "Dark-Dark", "Ghost-Ghost", "Diamond-Diamond", "Light-Light",
+							"Rubber-Rubber", "Barrier-Barrier",
+						}
+
+						-- Dò từng ID rẻ bằng LoadFruit thay cho getInventory.
+						-- Gọi thành công đồng thời NẠP LUÔN trái đó ra, nên tìm thấy là dùng luôn,
+						-- không cần gọi LoadFruit lần 2 phía sau.
+						local function FindCheapFruitByProbe()
+							for _, fruitId in ipairs(CHEAP_FRUIT_IDS) do
+								local probeOk, probeResult = pcall(function()
+									return COMMF_:InvokeServer("LoadFruit", fruitId)
+								end)
+
+								if probeOk and probeResult then
+									return fruitId
+								end
+
+								task.wait(0.1)
+							end
+
+							return nil
+						end
+
+						local lastFruitScanTime = 0
+
 						spawn(function()
 							if GetMapIndexRef3() == 2 and not announcedStage2 then
 								SetStatus("Kaitun Get Cyborg A-Z")
@@ -1266,21 +1295,17 @@ local function RunMainScript()
 														and (wenlocktoadResult3:lower():find("fruit") or wenlocktoadResult3:find("haven't completed") or wenlocktoadResult3:find("Talk to me again"))
 													then
 														local vName = nil
-														local huge = math.huge
-														local inventoryResult = COMMF_:InvokeServer("getInventory")
 
-														if type(inventoryResult) == "table" then
-															for _, v in next, inventoryResult do
-																if v.Type == "Blox Fruit" and huge > v.Value then
-																	huge = v.Value
-																	vName = v.Name
-																end
-															end
+														if tick() - lastFruitScanTime >= 5 then
+															lastFruitScanTime = tick()
+															SetStatus("Scanning cheap fruits...")
+															vName = FindCheapFruitByProbe()
 														end
 
 														if vName then
 															SetStatus("Submitting Fruit for V3")
-															COMMF_:InvokeServer("LoadFruit", vName)
+															-- fruit đã được nạp ra ngay trong lúc dò (FindCheapFruitByProbe),
+															-- không cần gọi LoadFruit lần 2 ở đây
 															task.wait(1)
 															COMMF_:InvokeServer("Wenlocktoad", "3")
 															task.wait(1)
