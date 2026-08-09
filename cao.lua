@@ -5,19 +5,19 @@ local CoreGui = game:GetService("CoreGui")
 
 local LocalPlayer = Players.LocalPlayer
 local SEARCH_RADIUS = 2000
-local TWEEN_SPEED = 100 -- Studs/Giây
+local TWEEN_SPEED = 500 -- Tăng tốc độ bay (Studs/giây) - Chỉnh tăng giảm tùy ý
 
 local isRunning = false
 local currentTween = nil
 local noclipConnection = nil
 local alignBody = {BV = nil, BG = nil}
 
--- Quản lý Noclip & Giữ nhân vật không rơi
+-- Quản lý Noclip
 local function setNoclip(enabled)
 	if enabled then
 		noclipConnection = RunService.Stepped:Connect(function()
 			if LocalPlayer.Character then
-				for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+				for _, part in ipairs(LocalPlayer.Character:GetChildren()) do
 					if part:IsA("BasePart") then
 						part.CanCollide = false
 					end
@@ -30,7 +30,7 @@ local function setNoclip(enabled)
 			noclipConnection = nil
 		end
 		if LocalPlayer.Character then
-			for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+			for _, part in ipairs(LocalPlayer.Character:GetChildren()) do
 				if part:IsA("BasePart") then
 					part.CanCollide = true
 				end
@@ -39,16 +39,17 @@ local function setNoclip(enabled)
 	end
 end
 
+-- Khóa trọng lực & hướng xoay
 local function setPhysicsLock(enabled, rootPart)
 	if enabled and rootPart then
 		local bv = Instance.new("BodyVelocity")
-		bv.Name = "AutoFlyVelocity"
+		bv.Name = "FastFlyVelocity"
 		bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-		bv.Velocity = Vector3.new(0, 0, 0)
+		bv.Velocity = Vector3.zero
 		bv.Parent = rootPart
 		
 		local bg = Instance.new("BodyGyro")
-		bg.Name = "AutoFlyGyro"
+		bg.Name = "FastFlyGyro"
 		bg.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
 		bg.CFrame = rootPart.CFrame
 		bg.Parent = rootPart
@@ -63,8 +64,8 @@ local function setPhysicsLock(enabled, rootPart)
 	end
 end
 
--- Thuật toán tìm điểm cao nhất trong bán kính
-local function findHighestPoint(origin, radius)
+-- Thuật toán Raycast xoắn ốc (Siêu nhanh - không trễ UI)
+local function findHighestPointFast(origin, radius)
 	local raycastParams = RaycastParams.new()
 	raycastParams.FilterType = RaycastFilterType.Exclude
 	if LocalPlayer.Character then
@@ -73,18 +74,26 @@ local function findHighestPoint(origin, radius)
 
 	local highestPoint = nil
 	local highestY = -math.huge
-	local step = 40 -- Tăng/giảm để chỉnh độ chính xác & hiệu năng quét
+	
+	-- Quét theo bán kính nhảy bước lớn (Step 50m) để đạt tốc độ tối đa
+	local stepSize = 50 
+	local numRings = math.floor(radius / stepSize)
 
-	for x = -radius, radius, step do
-		for z = -radius, radius, step do
-			if (x^2 + z^2) <= radius^2 then
-				local startPos = Vector3.new(origin.X + x, origin.Y + 1000, origin.Z + z)
-				local rayResult = workspace:Raycast(startPos, Vector3.new(0, -3000, 0), raycastParams)
-				
-				if rayResult and rayResult.Position.Y > highestY then
-					highestY = rayResult.Position.Y
-					highestPoint = rayResult.Position
-				end
+	for r = 1, numRings do
+		local currentRadius = r * stepSize
+		local pointsOnRing = math.floor(2 * math.pi * currentRadius / stepSize)
+		
+		for i = 1, pointsOnRing do
+			local angle = (i / pointsOnRing) * math.pi * 2
+			local x = math.cos(angle) * currentRadius
+			local z = math.sin(angle) * currentRadius
+			
+			local startPos = Vector3.new(origin.X + x, origin.Y + 1500, origin.Z + z)
+			local rayResult = workspace:Raycast(startPos, Vector3.new(0, -4000, 0), raycastParams)
+			
+			if rayResult and rayResult.Position.Y > highestY then
+				highestY = rayResult.Position.Y
+				highestPoint = rayResult.Position
 			end
 		end
 	end
@@ -92,51 +101,7 @@ local function findHighestPoint(origin, radius)
 	return highestPoint
 end
 
--- Khởi chạy Tween
-local function startAutoTravel(button)
-	local char = LocalPlayer.Character
-	local root = char and char:FindFirstChild("HumanoidRootPart")
-	if not root then
-		isRunning = false
-		button.Text = "BẬT TÌM ĐIỂM CAO"
-		button.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
-		return
-	end
-
-	button.Text = "ĐANG QUÉT VÙNG ĐẤT..."
-	task.wait(0.1)
-
-	local targetPos = findHighestPoint(root.Position, SEARCH_RADIUS)
-	if not targetPos then
-		isRunning = false
-		button.Text = "BẬT TÌM ĐIỂM CAO"
-		button.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
-		return
-	end
-
-	-- Tạo điểm đến an toàn phía trên mặt đất 5 studs
-	local finalCFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
-	local distance = (finalCFrame.Position - root.Position).Magnitude
-	local duration = distance / TWEEN_SPEED
-
-	setNoclip(true)
-	setPhysicsLock(true, root)
-
-	button.Text = "ĐANG TWEEN..."
-	button.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
-
-	local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
-	currentTween = TweenService:Create(root, tweenInfo, {CFrame = finalCFrame})
-	
-	currentTween:Play()
-	currentTween.Completed:Connect(function(playbackState)
-		if playbackState == Enum.PlaybackState.Completed then
-			stopAutoTravel(button)
-		end
-	end)
-end
-
-function stopAutoTravel(button)
+local function stopAutoTravel(button)
 	isRunning = false
 	if currentTween then
 		currentTween:Cancel()
@@ -149,17 +114,63 @@ function stopAutoTravel(button)
 	setPhysicsLock(false, root)
 	setNoclip(false)
 
-	button.Text = "BẬT TÌM ĐIỂM CAO"
-	button.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
+	if button then
+		button.Text = "BẬT TÌM ĐIỂM CAO"
+		button.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
+	end
 end
 
--- Tạo Giao diện UI
-local screenGui = Instance.new("ScreenGui")
+-- Khởi chạy di chuyển
+local function startAutoTravel(button)
+	local char = LocalPlayer.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not root then
+		stopAutoTravel(button)
+		return
+	end
+
+	button.Text = "ĐANG QUÉT..."
+	
+	-- Chạy quét bất đồng bộ để tránh khựng màn hình
+	task.spawn(function()
+		local targetPos = findHighestPointFast(root.Position, SEARCH_RADIUS)
+		
+		if not targetPos or not isRunning then
+			stopAutoTravel(button)
+			return
+		end
+
+		local finalCFrame = CFrame.new(targetPos + Vector3.new(0, 4, 0))
+		local distance = (finalCFrame.Position - root.Position).Magnitude
+		local duration = distance / TWEEN_SPEED
+
+		setNoclip(true)
+		setPhysicsLock(true, root)
+
+		button.Text = "ĐANG TWEEN FAST..."
+		button.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+
+		-- Sử dụng EasingStyle.Linear cho chuyển động đều và mượt ở tốc độ cao
+		local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+		currentTween = TweenService:Create(root, tweenInfo, {CFrame = finalCFrame})
+		
+		currentTween:Play()
+		currentTween.Completed:Connect(function(playbackState)
+			if playbackState == Enum.PlaybackState.Completed then
+				stopAutoTravel(button)
+			end
+		end)
+	end)
+end
+
+-- UI
+local screenGui = CoreGui:FindFirstChild("AutoHighestLandGUI") or Instance.new("ScreenGui")
 screenGui.Name = "AutoHighestLandGUI"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = CoreGui
 
-local mainButton = Instance.new("TextButton")
+local mainButton = screenGui:FindFirstChild("MainButton") or Instance.new("TextButton")
+mainButton.Name = "MainButton"
 mainButton.Size = UDim2.new(0, 180, 0, 45)
 mainButton.Position = UDim2.new(0.8, 0, 0.2, 0)
 mainButton.BackgroundColor3 = Color3.fromRGB(40, 180, 80)
@@ -171,9 +182,11 @@ mainButton.Active = true
 mainButton.Draggable = true
 mainButton.Parent = screenGui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = mainButton
+if not mainButton:FindFirstChildOfClass("UICorner") then
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = mainButton
+end
 
 mainButton.MouseButton1Click:Connect(function()
 	isRunning = not isRunning
