@@ -9,7 +9,7 @@ local LocalPlayer = Players.LocalPlayer
 local Locations = Workspace:WaitForChild("_WorldOrigin"):WaitForChild("Locations")
 
 -- Config
-_G.HighestMirage = false
+_G.HighestMirage = true
 _G.AutoInteractGear = true 
 
 local TWEEN_SPEED = 300
@@ -350,7 +350,7 @@ MirageToggleBtn.MouseButton1Click:Connect(function()
         MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
         Notify("🌴 Auto Mirage", "Đã BẬT tự động đến đỉnh Mirage Island")
     else
-        MirageToggleBtn.Text = "Auto Mirage: OFF"
+        MirageToggleBtn.Text = "Auto Mirage: on"
         MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
         
         IsArrived = false
