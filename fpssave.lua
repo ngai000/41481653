@@ -10,8 +10,8 @@ local Locations = Workspace:WaitForChild("_WorldOrigin"):WaitForChild("Locations
 
 -- Config
 _G.HighestMirage = true
-_G.TPGEAR = true          
-_G.AutoInteractGear = true 
+_G.TPGEAR = false          
+_G.AutoInteractGear = false 
 
 local TWEEN_SPEED = 300
 
