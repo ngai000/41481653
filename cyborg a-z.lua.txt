@@ -125,26 +125,6 @@ local function u12()
 							Duration = 5,
 						})
 
-						if not game:IsLoaded() or workspace.DistributedGameTime <= 10 then
-							local s1 = "WFGTL"
-							local s1_2 = COREGUI:FindFirstChild("WFGTL")
-
-							if not s1_2 then
-								local new = Instance.new
-
-								s1 = COREGUI
-								s1_2 = new("Hint", COREGUI)
-							end
-
-							s1_2.Text = "Maris Hub - Kaitun Get Cyborg A-Z"
-
-							local wait = task.wait
-							local _ = workspace.DistributedGameTime
-
-							wait(s1)
-							s1_2:Destroy()
-						end
-
 						if not COMMF_ then
 							repeat
 								task.wait(1)
