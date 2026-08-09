@@ -6,6 +6,7 @@ local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
 local Locations = Workspace:WaitForChild("_WorldOrigin"):WaitForChild("Locations")
 
 -- Config
@@ -13,29 +14,15 @@ _G.HighestMirage = true
 _G.AutoInteractGear = true 
 
 local TWEEN_SPEED = 300
+local IsTrackingMoon = false -- Cờ trạng thái khóa Moon
 
-local MirageHighlight = nil
-local MirageBillboard = nil
-local DistanceConnection = nil
-local NoclipConnection = nil
-local MirageDetected = false
-local CurrentTween = nil
-local IsArrived = false
-local FloatBV = nil
-
--- Cờ trạng thái các tác vụ
-local IsTPingGear = false
-local IsTPingShop = false
-
+-- Utility
 local function Notify(title, text)
     pcall(function()
-        StarterGui:SetCore("SendNotification", {
-            Title = title,
-            Text = text,
-            Duration = 5
-        })
+        StarterGui:SetCore("SendNotification", {Title = title, Text = text, Duration = 5})
     end)
 end
+
 
 -- 1. Quản lý Noclip & Float
 local function EnableNoclipAndFloat()
@@ -258,11 +245,11 @@ local MirageToggleBtn = Instance.new("TextButton")
 MirageToggleBtn.Name = "MirageToggleBtn"
 MirageToggleBtn.Size = UDim2.new(0, 140, 0, 40)
 MirageToggleBtn.Position = UDim2.new(0, 20, 0.4, 48)
-MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
 MirageToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MirageToggleBtn.TextSize = 14
 MirageToggleBtn.Font = Enum.Font.SourceSansBold
-MirageToggleBtn.Text = "Auto Mirage: on"
+MirageToggleBtn.Text = "Auto Mirage: OFF"
 MirageToggleBtn.Parent = ScreenGui
 
 local Corner2 = Instance.new("UICorner")
@@ -362,6 +349,44 @@ MirageToggleBtn.MouseButton1Click:Connect(function()
         Notify("🌴 Auto Mirage", "Đã TẮT - Khôi phục di chuyển bình thường")
     end
 end)
+-- Logic Camera và Tracking
+local function ResetCamera()
+    LocalPlayer.CameraMaxZoomDistance = 400 -- Trả lại mặc định
+    LocalPlayer.CameraMinZoomDistance = 0.5
+    IsTrackingMoon = false
+end
+
+-- RenderStepped cho Camera Lock (Cập nhật liên tục)
+RunService.RenderStepped:Connect(function()
+    if _G.HighestMirage and IsTrackingMoon then
+        local Moon = Workspace:FindFirstChild("Moon", true) -- Tìm đối tượng "Moon"
+        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        
+        if Moon and hrp then
+            -- Cưỡng chế First Person
+            LocalPlayer.CameraMaxZoomDistance = 0
+            LocalPlayer.CameraMinZoomDistance = 0
+            
+            -- Khóa Camera nhìn thẳng mặt trăng
+            Camera.CFrame = CFrame.lookAt(hrp.Position, Moon.Position)
+        end
+    end
+end)
+
+-- Sự kiện Click Auto Mirage
+MirageToggleBtn.MouseButton1Click:Connect(function()
+    _G.HighestMirage = not _G.HighestMirage
+    if _G.HighestMirage then
+        MirageToggleBtn.Text = "Auto Mirage: ON"
+        MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
+    else
+        MirageToggleBtn.Text = "Auto Mirage: OFF"
+        MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+        IsTrackingMoon = false
+        ResetCamera()
+        DisableNoclipAndFloat()
+    end
+end)
 
 -- Sự kiện Click Nút TP Shop
 ShopBtn.MouseButton1Click:Connect(function()
@@ -426,57 +451,30 @@ task.spawn(function()
     while task.wait(0.1) do
         if Locations:FindFirstChild("Mirage Island") then
             if _G.HighestMirage and not IsTPingGear and not IsTPingShop then
-                pcall(function()
-                    local mapMystic = Workspace.Map:FindFirstChild("MysticIsland")
-                    if mapMystic and mapMystic:FindFirstChild("Center") then
-                        local targetPos = mapMystic.Center.CFrame * CFrame.new(0, 400, 0)
-                        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        
-                        if hrp then
-                            local distance = (hrp.Position - targetPos.Position).Magnitude
-                            if distance <= 10 then
-                                IsArrived = true
-                                if CurrentTween then 
-                                    CurrentTween:Cancel() 
-                                    CurrentTween = nil
-                                end
-                                EnableNoclipAndFloat() 
-                            else
-                                IsArrived = false
-                                TweenTo(targetPos)
-                            end
+                local mapMystic = Workspace.Map:FindFirstChild("MysticIsland")
+                if mapMystic and mapMystic:FindFirstChild("Center") then
+                    local targetPos = mapMystic.Center.CFrame * CFrame.new(0, 400, 0)
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    
+                    if hrp then
+                        local distance = (hrp.Position - targetPos.Position).Magnitude
+                        if distance <= 10 then
+                            -- Đã đến nơi
+                            EnableNoclipAndFloat()
+                            IsTrackingMoon = true -- Kích hoạt cơ chế khóa Camera
+                        else
+                            TweenTo(targetPos)
+                            IsTrackingMoon = false -- Tắt khóa trong lúc di chuyển
                         end
                     end
-                end)
+                end
             end
         else
             if not IsTPingGear and not IsTPingShop and not _G.HighestMirage then
+                IsTrackingMoon = false
+                ResetCamera()
                 DisableNoclipAndFloat()
             end
         end
-    end
-end)
-
--- Khởi chạy ban đầu
-ClearFog()
-CheckMirage()
-
-Locations.ChildAdded:Connect(function(child)
-    if child.Name == "Mirage Island" then
-        task.wait(0.2)
-        CheckMirage()
-    end
-end)
-
-Locations.ChildRemoved:Connect(function(child)
-    if child.Name == "Mirage Island" then
-        CheckMirage()
-    end
-end)
-
-task.spawn(function()
-    while task.wait(1) do
-        CheckMirage()
-        ClearFog()
     end
 end)
