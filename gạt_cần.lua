@@ -254,11 +254,11 @@ local MirageToggleBtn = Instance.new("TextButton")
 MirageToggleBtn.Name = "MirageToggleBtn"
 MirageToggleBtn.Size = UDim2.new(0, 140, 0, 40)
 MirageToggleBtn.Position = UDim2.new(0, 20, 0.4, 48) -- Nằm ngay bên dưới nút TP Gear
-MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
 MirageToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MirageToggleBtn.TextSize = 14
 MirageToggleBtn.Font = Enum.Font.SourceSansBold
-MirageToggleBtn.Text = "Auto Mirage: OFF"
+MirageToggleBtn.Text = "Auto Mirage: on"
 MirageToggleBtn.Parent = ScreenGui
 
 local Corner2 = Instance.new("UICorner")
