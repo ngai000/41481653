@@ -206,8 +206,8 @@ local function RunMainScript()
 
 						local Frame = Instance.new("Frame", ScreenGui)
 
-						Frame.Size = UDim2.new(0, 360, 0, 220)
-						Frame.Position = UDim2.new(0.5, -180, 0.5, -110)
+						Frame.Size = UDim2.new(0, 360, 0, 180)
+						Frame.Position = UDim2.new(0.5, -180, 0.5, -90)
 						Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 						Frame.BackgroundTransparency = 0.2
 						Frame.BorderSizePixel = 0
@@ -225,7 +225,7 @@ local function RunMainScript()
 						local function CreateLabel(text, position, textSize)
 							local TextLabel = Instance.new("TextLabel", mainFrame)
 
-							TextLabel.Size = UDim2.new(1, 0, 0, 30)
+							TextLabel.Size = UDim2.new(1, 0, 0, 40)
 							TextLabel.Position = position
 							TextLabel.BackgroundTransparency = 1
 							TextLabel.Text = text
@@ -241,15 +241,13 @@ local function RunMainScript()
 							return TextLabel
 						end
 
-						local titleLabel = CreateLabel("vô danh", UDim2.new(0, 0, 0, 10), 24)
-						local subtitleLabel = CreateLabel("Kaitun Get Cyborg A-Z", UDim2.new(0, 0, 0, 45), 22)
-						local updateLabel = CreateLabel("Fix: Auto V3 | Hop Server | Rejoin Old Server", UDim2.new(0, 0, 0, 85), 14)
-						local discordLabel = CreateLabel("https://discord.gg/.....", UDim2.new(0, 0, 0, 160), 16)
+						local titleLabel = CreateLabel("vô danh", UDim2.new(0, 0, 0, 20), 28)
+						local subtitleLabel = CreateLabel("Kaitun Get Cyborg A-Z", UDim2.new(0, 0, 0, 70), 28)
+						local discordLabel = CreateLabel("https://discord.gg/.....", UDim2.new(0, 0, 0, 120), 16)
 						local RenderStepped = RunService.RenderStepped
 						local frameStroke = UIStroke
 						local titleLabelRef = titleLabel
 						local subtitleLabelRef = subtitleLabel
-						local updateLabelRef = updateLabel
 						local discordLabelRef = discordLabel
 
 						RenderStepped:Connect(function()
@@ -262,7 +260,6 @@ local function RunMainScript()
 							local waveA = (math.sin(hueTime) + 1) / 2
 
 							subtitleLabelRef.TextColor3 = Color3.new(waveA, 1, waveA)
-							updateLabelRef.TextColor3 = Color3.fromRGB(255, 215, 0)
 
 							local hueTime2 = timestamp * 1.5
 							local waveB = (math.sin(hueTime2) + 1) / 2
@@ -1311,7 +1308,7 @@ local function RunMainScript()
 													end
 												end
 											elseif not LocalPlayer.Data.Race:FindFirstChild("Evolved") then
-												SetStatus("UP V1->V3")
+												SetStatus("UP V1->V2")
 
 												if COMMF_:InvokeServer("Alchemist", "2") == "Come back when you find them." then
 													if CheckTool("Flower 1") or workspace.Flower1.Transparency ~= 0 then
@@ -1523,7 +1520,7 @@ local function RunMainScript()
 						workspaceFound = true
 					end
 
-					if not workspaceFound me
+					if not workspaceFound then
 						workspaceRef = getrenv().Workspace
 
 						if workspaceRef then
