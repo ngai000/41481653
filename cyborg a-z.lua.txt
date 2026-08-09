@@ -1308,7 +1308,7 @@ local function RunMainScript()
 													end
 												end
 											elseif not LocalPlayer.Data.Race:FindFirstChild("Evolved") then
-												SetStatus("UP V1->V2")
+												SetStatus("UP V1->V3")
 
 												if COMMF_:InvokeServer("Alchemist", "2") == "Come back when you find them." then
 													if CheckTool("Flower 1") or workspace.Flower1.Transparency ~= 0 then
