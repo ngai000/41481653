@@ -120,7 +120,7 @@ local function RunMainScript()
 						end
 
 						StarterGui:SetCore("SendNotification", {
-							Title = "Vô danh",
+							Title = "vô danh",
 							Text = "Loading… Please wait",
 							Duration = 5,
 						})
@@ -152,8 +152,8 @@ local function RunMainScript()
 									end)
 									task.delay(5, function()
 										StarterGui:SetCore("SendNotification", {
-											Title = "Cảnh báo ⚠️",
-											Text = "Trình thực thi này có thể gây ra lỗi trong quá trình chạy tập lệnh.\n[ERROR CODE: UIGE]",
+											Title = "Incompatible Executor",
+											Text = "This executor may cause errors while running the script\n[ERROR CODE: UIGE]",
 											Duration = 20,
 										})
 									end)
@@ -201,7 +201,7 @@ local function RunMainScript()
 						local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 						local ScreenGui = Instance.new("ScreenGui", PlayerGui)
 
-						ScreenGui.Name = "TrongNguyenHub_Premium"
+						ScreenGui.Name = "vô danh"
 						ScreenGui.ResetOnSpawn = false
 
 						local Frame = Instance.new("Frame", ScreenGui)
@@ -241,9 +241,9 @@ local function RunMainScript()
 							return TextLabel
 						end
 
-						local titleLabel = CreateLabel("Vô Danh", UDim2.new(0, 0, 0, 20), 28)
+						local titleLabel = CreateLabel("vô danh", UDim2.new(0, 0, 0, 20), 28)
 						local subtitleLabel = CreateLabel("Kaitun Get Cyborg A-Z", UDim2.new(0, 0, 0, 70), 28)
-						local discordLabel = CreateLabel("Fix auto v3", UDim2.new(0, 0, 0, 120), 16)
+						local discordLabel = CreateLabel("https://discord.gg/.....", UDim2.new(0, 0, 0, 120), 16)
 						local RenderStepped = RunService.RenderStepped
 						local frameStroke = UIStroke
 						local titleLabelRef = titleLabel
@@ -655,7 +655,67 @@ local function RunMainScript()
 						end
 
 						local timestamp2 = nil
-						local u72 = nil
+						local cachedServerData = nil
+
+						-- ==== Hệ thống lưu 10 server gần nhất (persist qua file, sống sót sau khi hop) ====
+						local RECENT_SERVERS_FILE = "recent_servers_" .. game.PlaceId .. ".txt"
+						local MAX_RECENT_SERVERS = 10
+						local hasFileSupport = writefile ~= nil and readfile ~= nil and isfile ~= nil
+
+						local function LoadRecentServers()
+							local list = {}
+
+							if hasFileSupport and isfile(RECENT_SERVERS_FILE) then
+								local ok, content = pcall(readfile, RECENT_SERVERS_FILE)
+
+								if ok and content then
+									for line in content:gmatch("[^\r\n]+") do
+										table.insert(list, line)
+									end
+								end
+							end
+
+							return list
+						end
+
+						local function SaveRecentServers(list)
+							if hasFileSupport then
+								pcall(writefile, RECENT_SERVERS_FILE, table.concat(list, "\n"))
+							end
+						end
+
+						local function IsRecentServer(jobId)
+							for _, id in ipairs(LoadRecentServers()) do
+								if id == jobId then
+									return true
+								end
+							end
+
+							return false
+						end
+
+						local function AddRecentServer(jobId)
+							local list = LoadRecentServers()
+
+							for i = #list, 1, -1 do
+								if list[i] == jobId then
+									table.remove(list, i)
+								end
+							end
+
+							table.insert(list, jobId)
+
+							while #list > MAX_RECENT_SERVERS do
+								table.remove(list, 1)
+							end
+
+							SaveRecentServers(list)
+						end
+
+						-- Ghi server hiện tại vào danh sách ngay khi script load, tránh hop lại chính server này
+						if hasFileSupport then
+							pcall(AddRecentServer, game.JobId)
+						end
 
 						function GetServers()
 							if not timestamp2 or not (os.time() - timestamp2 < 60) then
@@ -664,7 +724,7 @@ local function RunMainScript()
 
 									if IfTableHaveIndex(serverData) then
 										timestamp2 = os.time()
-										u72 = serverData
+										cachedServerData = serverData
 
 										return serverData
 									end
@@ -673,20 +733,32 @@ local function RunMainScript()
 								return
 							end
 
-							return u72
+							return cachedServerData
 						end
 						function HopServer(_, requireLowPop, regionFilter)
 							local serverList = {}
 
 							for jobId, serverInfo in (GetServers()) do
-								local serverEntry = {
-									JobId = jobId,
-									Players = serverInfo.Count,
-									LastUpdate = serverInfo.__LastUpdate,
-									Region = serverInfo.Region,
-								}
+								if not hasFileSupport or not IsRecentServer(jobId) then
+									table.insert(serverList, {
+										JobId = jobId,
+										Players = serverInfo.Count,
+										LastUpdate = serverInfo.__LastUpdate,
+										Region = serverInfo.Region,
+									})
+								end
+							end
 
-								table.insert(serverList, serverEntry)
+							-- Nếu lọc hết sạch (tất cả server hiện có đều nằm trong 10 server gần nhất) thì dùng lại full list
+							if #serverList == 0 then
+								for jobId, serverInfo in (GetServers()) do
+									table.insert(serverList, {
+										JobId = jobId,
+										Players = serverInfo.Count,
+										LastUpdate = serverInfo.__LastUpdate,
+										Region = serverInfo.Region,
+									})
+								end
 							end
 
 							local pickedServer = nil
@@ -698,6 +770,10 @@ local function RunMainScript()
 									if pickedServer and (not requireLowPop or pickedServer.Players < 5) and (not regionFilter or regionFilter == pickedServer.Regoin) then
 										break
 									end
+								end
+
+								if hasFileSupport then
+									pcall(AddRecentServer, pickedServer.JobId)
 								end
 
 								ReplicatedStorage:WaitForChild("__ServerBrowser"):InvokeServer("teleport", pickedServer.JobId)
