@@ -9,7 +9,7 @@ local LocalPlayer = Players.LocalPlayer
 local Locations = Workspace:WaitForChild("_WorldOrigin"):WaitForChild("Locations")
 
 -- Config
-_G.HighestMirage = true -- Mặc định TẮT tự động bay lên đỉnh đảo
+_G.HighestMirage = true
 _G.AutoInteractGear = true 
 
 local TWEEN_SPEED = 300
@@ -22,7 +22,10 @@ local MirageDetected = false
 local CurrentTween = nil
 local IsArrived = false
 local FloatBV = nil
+
+-- Cờ trạng thái các tác vụ
 local IsTPingGear = false
+local IsTPingShop = false
 
 local function Notify(title, text)
     pcall(function()
@@ -126,6 +129,7 @@ local function CleanupESP()
     end
     IsArrived = false
     IsTPingGear = false
+    IsTPingShop = false
 end
 
 -- 3. Hàm Tween Di Chuyển
@@ -253,8 +257,8 @@ Corner1.Parent = ActionBtn
 local MirageToggleBtn = Instance.new("TextButton")
 MirageToggleBtn.Name = "MirageToggleBtn"
 MirageToggleBtn.Size = UDim2.new(0, 140, 0, 40)
-MirageToggleBtn.Position = UDim2.new(0, 20, 0.4, 48) -- Nằm ngay bên dưới nút TP Gear
-MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
+MirageToggleBtn.Position = UDim2.new(0, 20, 0.4, 48)
+MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
 MirageToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MirageToggleBtn.TextSize = 14
 MirageToggleBtn.Font = Enum.Font.SourceSansBold
@@ -265,9 +269,25 @@ local Corner2 = Instance.new("UICorner")
 Corner2.CornerRadius = UDim.new(0, 8)
 Corner2.Parent = MirageToggleBtn
 
+-- 5.3 Nút Bấm TP Shop (Advanced Fruit Dealer)
+local ShopBtn = Instance.new("TextButton")
+ShopBtn.Name = "TPShopBtn"
+ShopBtn.Size = UDim2.new(0, 140, 0, 40)
+ShopBtn.Position = UDim2.new(0, 20, 0.4, 96) -- Bố trí vị trí bên dưới nút Auto Mirage
+ShopBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+ShopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ShopBtn.TextSize = 14
+ShopBtn.Font = Enum.Font.SourceSansBold
+ShopBtn.Text = "TP Shop"
+ShopBtn.Parent = ScreenGui
+
+local Corner3 = Instance.new("UICorner")
+Corner3.CornerRadius = UDim.new(0, 8)
+Corner3.Parent = ShopBtn
+
 -- Sự kiện Click Nút TP Gear
 ActionBtn.MouseButton1Click:Connect(function()
-    if IsTPingGear then return end
+    if IsTPingGear or IsTPingShop then return end
 
     if not Locations:FindFirstChild("Mirage Island") then
         Notify("⚙️ TP Gear", "Chưa xuất hiện Mirage Island!")
@@ -333,7 +353,6 @@ MirageToggleBtn.MouseButton1Click:Connect(function()
         MirageToggleBtn.Text = "Auto Mirage: OFF"
         MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
         
-        -- Reset trạng thái ngay lập tức khi tắt
         IsArrived = false
         if CurrentTween then
             CurrentTween:Cancel()
@@ -344,12 +363,69 @@ MirageToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Sự kiện Click Nút TP Shop
+ShopBtn.MouseButton1Click:Connect(function()
+    if IsTPingShop or IsTPingGear then return end
+
+    IsTPingShop = true
+    ShopBtn.Text = "Teleporting..."
+    ShopBtn.BackgroundColor3 = Color3.fromRGB(200, 120, 0)
+
+    task.spawn(function()
+        local shopNPC = nil
+        
+        -- Tìm kiếm NPC Advanced Fruit Dealer trong Workspace
+        local npcsFolder = Workspace:FindFirstChild("NPCs")
+        if npcsFolder then
+            for _, npc in pairs(npcsFolder:GetChildren()) do
+                if npc.Name == "Advanced Fruit Dealer" then
+                    shopNPC = npc
+                    break
+                end
+            end
+        end
+
+        -- Tìm kiếm bổ sung trong Map nếu thư mục NPCs chính không có
+        if not shopNPC and Workspace:FindFirstChild("Map") then
+            for _, v in pairs(Workspace.Map:GetDescendants()) do
+                if v.Name == "Advanced Fruit Dealer" and v:IsA("Model") then
+                    shopNPC = v
+                    break
+                end
+            end
+        end
+
+        if shopNPC then
+            local targetPart = shopNPC:FindFirstChild("HumanoidRootPart") or shopNPC:FindFirstChildOfClass("BasePart")
+            if targetPart then
+                Notify("🛒 TP Shop", "Đã tìm thấy Shop! Đang di chuyển...")
+                
+                while shopNPC and shopNPC.Parent and IsTPingShop do
+                    local arrived = TweenTo(targetPart.CFrame * CFrame.new(0, 3, 3))
+                    
+                    if arrived or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - targetPart.Position).Magnitude <= 10) then
+                        Notify("🛒 TP Shop", "Đã tới vị trí Advanced Fruit Dealer!")
+                        DisableNoclipAndFloat()
+                        break
+                    end
+                    task.wait(0.1)
+                end
+            end
+        else
+            Notify("🛒 TP Shop", "Không tìm thấy Advanced Fruit Dealer!")
+        end
+
+        IsTPingShop = false
+        ShopBtn.Text = "TP Shop"
+        ShopBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 215)
+    end)
+end)
+
 -- 6. Task Logic Vận Hành
 task.spawn(function()
     while task.wait(0.1) do
         if Locations:FindFirstChild("Mirage Island") then
-            -- Chỉ chạy nếu BẬT Auto Mirage và KHÔNG trong quá trình TP Gear
-            if _G.HighestMirage and not IsTPingGear then
+            if _G.HighestMirage and not IsTPingGear and not IsTPingShop then
                 pcall(function()
                     local mapMystic = Workspace.Map:FindFirstChild("MysticIsland")
                     if mapMystic and mapMystic:FindFirstChild("Center") then
@@ -364,7 +440,6 @@ task.spawn(function()
                                     CurrentTween:Cancel() 
                                     CurrentTween = nil
                                 end
-                                -- Giữ lơ lửng tại chỗ khi đã tới đỉnh, không rơi
                                 EnableNoclipAndFloat() 
                             else
                                 IsArrived = false
@@ -375,7 +450,7 @@ task.spawn(function()
                 end)
             end
         else
-            if not IsTPingGear and not _G.HighestMirage then
+            if not IsTPingGear and not IsTPingShop and not _G.HighestMirage then
                 DisableNoclipAndFloat()
             end
         end
