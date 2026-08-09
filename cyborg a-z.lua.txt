@@ -12,18 +12,18 @@ local TweenService = game:GetService("TweenService")
 local TeleportService = game:GetService("TeleportService")
 local LocalPlayer = Players.LocalPlayer
 
-local function u12()
-	local function v37(...)
-		local t3 = { ... }
+local function RunMainScript()
+	local function PackArgs(...)
+		local argsTbl = { ... }
 
-		t3.n = select("#", ...)
+		argsTbl.n = select("#", ...)
 
-		return t3
+		return argsTbl
 	end
 
 	print("SUCCESS! Running Main Script...")
 
-	local g39 = nil
+	local workspaceFound = nil
 
 	repeat
 		task.wait(0.5)
@@ -43,22 +43,22 @@ local function u12()
 	task.delay(10, function()
 		getgenv().WARCLOADER = nil
 	end)
-	cloneref = cloneref or (clonereference or function(p1)
-		return p1
+	cloneref = cloneref or (clonereference or function(ref)
+		return ref
 	end)
 	isnetworkowner = isnetworkowner or (isNetworkOwner or function()
 		return true
 	end)
 
-	local v38 = cloneref(workspace)
+	local workspaceRef = cloneref(workspace)
 
 	repeat
 		repeat
 			repeat
 				repeat
-					if g39 or (g39 or (g39 or (g39 or v38))) then
-						g39 = false
-						workspace = v38
+					if workspaceFound or (workspaceFound or (workspaceFound or (workspaceFound or workspaceRef))) then
+						workspaceFound = false
+						workspace = workspaceRef
 
 						local PlaceId2 = game.PlaceId
 						local JobId2 = game.JobId
@@ -70,26 +70,26 @@ local function u12()
 						end)))
 						IsOnMobile = false
 
-						local t4 = {
-							__index = function(p2, p3)
-								local u133 = p3
-								local v134, v135 = pcall(function()
-									return cloneref(game:GetService(u133))
+						local ServiceMeta = {
+							__index = function(tbl, svcName)
+								local serviceName = svcName
+								local gotService, serviceObj = pcall(function()
+									return cloneref(game:GetService(serviceName))
 								end)
 
-								if not v134 then
-									error("Invalid Roblox Service: " .. tostring(p3))
+								if not gotService then
+									error("Invalid Roblox Service: " .. tostring(svcName))
 
 									return
 								end
 
-								rawset(p2, p3, v135)
+								rawset(tbl, svcName, serviceObj)
 
-								return v135
+								return serviceObj
 							end,
 						}
 
-						Services = setmetatable({}, t4)
+						Services = setmetatable({}, ServiceMeta)
 						COREGUI = Services.CoreGui
 						RunService = Services.RunService
 						VirtualUser = Services.VirtualUser
@@ -141,14 +141,14 @@ local function u12()
 								gethui().IgnoreGuiInset = true
 							end, function(_)
 								xpcall(function()
-									local v396 = COREGUI:FindFirstChild("ScreenGUI") or Instance.new("ScreenGui", COREGUI)
+									local screenGuiInstance = COREGUI:FindFirstChild("ScreenGUI") or Instance.new("ScreenGui", COREGUI)
 
-									v396.Name = "ScreenGUI"
-									v396.IgnoreGuiInset = true
-									local u399 = v396
+									screenGuiInstance.Name = "ScreenGUI"
+									screenGuiInstance.IgnoreGuiInset = true
+									local screenGuiRef = screenGuiInstance
 
 									hookfunction(gethui, function()
-										return u399
+										return screenGuiRef
 									end)
 									task.delay(5, function()
 										StarterGui:SetCore("SendNotification", {
@@ -164,21 +164,21 @@ local function u12()
 						end)
 						task.spawn(function()
 							xpcall(function()
-								local v314 = getgenv and (getgenv().Settings and getgenv().Settings.Team) or "Pirates"
+								local teamName = getgenv and (getgenv().Settings and getgenv().Settings.Team) or "Pirates"
 
-								if not LocalPlayer.Team or v314 ~= LocalPlayer.Team.Name then
+								if not LocalPlayer.Team or teamName ~= LocalPlayer.Team.Name then
 									if LocalPlayer.PlayerGui:FindFirstChild("LoadingScreen") then
 										repeat
 											task.wait(1)
 										until not LocalPlayer.PlayerGui:FindFirstChild("LoadingScreen")
 									end
-									local u316 = v314
-									local u317 = v314
+									local teamNameA = teamName
+									local teamNameB = teamName
 
 									xpcall(function()
-										COMMF_:InvokeServer("SetTeam", u316)
+										COMMF_:InvokeServer("SetTeam", teamNameA)
 									end, function()
-										firesignal(LocalPlayer.PlayerGui["Main (minimal)"].ChooseTeam.Container[u317])
+										firesignal(LocalPlayer.PlayerGui["Main (minimal)"].ChooseTeam.Container[teamNameB])
 									end)
 									task.wait(2)
 								end
@@ -220,17 +220,17 @@ local function u12()
 						UIStroke.Thickness = 4
 						UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-						local u52 = Frame
+						local mainFrame = Frame
 
-						local function v53(p5, p6, p7)
-							local TextLabel = Instance.new("TextLabel", u52)
+						local function CreateLabel(text, position, textSize)
+							local TextLabel = Instance.new("TextLabel", mainFrame)
 
 							TextLabel.Size = UDim2.new(1, 0, 0, 40)
-							TextLabel.Position = p6
+							TextLabel.Position = position
 							TextLabel.BackgroundTransparency = 1
-							TextLabel.Text = p5
+							TextLabel.Text = text
 							TextLabel.Font = Enum.Font.GothamBold
-							TextLabel.TextSize = p7
+							TextLabel.TextSize = textSize
 							TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 							local UIStroke2 = Instance.new("UIStroke", TextLabel)
@@ -241,45 +241,45 @@ local function u12()
 							return TextLabel
 						end
 
-						local v54 = v53("MARIS HUB", UDim2.new(0, 0, 0, 20), 28)
-						local v55 = v53("Kaitun Get Cyborg A-Z", UDim2.new(0, 0, 0, 70), 28)
-						local v56 = v53("https://discord.gg/vNWPpQUVuV", UDim2.new(0, 0, 0, 120), 16)
+						local titleLabel = CreateLabel("MARIS HUB", UDim2.new(0, 0, 0, 20), 28)
+						local subtitleLabel = CreateLabel("Kaitun Get Cyborg A-Z", UDim2.new(0, 0, 0, 70), 28)
+						local discordLabel = CreateLabel("https://discord.gg/vNWPpQUVuV", UDim2.new(0, 0, 0, 120), 16)
 						local RenderStepped = RunService.RenderStepped
-						local u58 = UIStroke
-						local u59 = v54
-						local u60 = v55
-						local u61 = v56
+						local frameStroke = UIStroke
+						local titleLabelRef = titleLabel
+						local subtitleLabelRef = subtitleLabel
+						local discordLabelRef = discordLabel
 
 						RenderStepped:Connect(function()
 							local timestamp = tick()
 
-							u58.Color = Color3.fromHSV(timestamp % 3 / 3, 1, 1)
-							u59.TextColor3 = Color3.fromHSV(timestamp * 0.5 % 1, 0.7, 1)
+							frameStroke.Color = Color3.fromHSV(timestamp % 3 / 3, 1, 1)
+							titleLabelRef.TextColor3 = Color3.fromHSV(timestamp * 0.5 % 1, 0.7, 1)
 
-							local v143 = timestamp * 3
-							local v144 = (math.sin(v143) + 1) / 2
+							local hueTime = timestamp * 3
+							local waveA = (math.sin(hueTime) + 1) / 2
 
-							u60.TextColor3 = Color3.new(v144, 1, v144)
+							subtitleLabelRef.TextColor3 = Color3.new(waveA, 1, waveA)
 
-							local v145 = timestamp * 1.5
-							local v146 = (math.sin(v145) + 1) / 2
+							local hueTime2 = timestamp * 1.5
+							local waveB = (math.sin(hueTime2) + 1) / 2
 
-							u61.TextColor3 = Color3.fromRGB(100 + v146 * 155, 200, 255)
+							discordLabelRef.TextColor3 = Color3.fromRGB(100 + waveB * 155, 200, 255)
 						end)
 
-						local u62 = v55
+						local statusLabel = subtitleLabel
 
-						local function u63(p8)
-							u62.Text = p8
+						local function SetStatus(text)
+							statusLabel.Text = text
 						end
 
-						local v64 = LocalPlayer.Name .. ".txt"
+						local logFileName = LocalPlayer.Name .. ".txt"
 
-						if not isfile(v64) then
-							writefile(v64, "NaN")
+						if not isfile(logFileName) then
+							writefile(logFileName, "NaN")
 						end
 
-						local function v65()
+						local function GetMapIndex()
 							if game.PlaceId ~= 2753915549 then
 								if game.PlaceId ~= 4442272183 then
 									if game.PlaceId ~= 7449423635 then
@@ -309,63 +309,63 @@ local function u12()
 							return 1
 						end
 
-						local u66 = nil
-						local u67 = nil
-						local u68 = ReplicatedStorage.Modules.Net.seed:InvokeServer()
+						local foundRemoteEvent = nil
+						local foundRemoteId = nil
+						local seedValue = ReplicatedStorage.Modules.Net.seed:InvokeServer()
 
 						task.spawn(function()
 							local _next = next
-							local t5 = {}
+							local foldersToScan = {}
 							local Util = ReplicatedStorage.Util
 							local Common = ReplicatedStorage.Common
 							local Remotes = ReplicatedStorage.Remotes
 							local Assets = ReplicatedStorage.Assets
 							local FX = ReplicatedStorage.FX
 
-							t5[1] = Util
-							t5[2] = Common
-							t5[3] = Remotes
-							t5[4] = Assets
-							t5[5] = FX
+							foldersToScan[1] = Util
+							foldersToScan[2] = Common
+							foldersToScan[3] = Remotes
+							foldersToScan[4] = Assets
+							foldersToScan[5] = FX
 
-							for _, v157 in _next, t5 do
-								for _, v in next, v157:GetChildren() do
+							for _, folder in _next, foldersToScan do
+								for _, v in next, folder:GetChildren() do
 									if v:IsA("RemoteEvent") and v:GetAttribute("Id") then
 										local Id = v:GetAttribute("Id")
 
-										u66 = v
-										u67 = Id
+										foundRemoteEvent = v
+										foundRemoteId = Id
 									end
 								end
 
-								v157.ChildAdded:Connect(function(child)
+								folder.ChildAdded:Connect(function(child)
 									if child:IsA("RemoteEvent") and child:GetAttribute("Id") then
 										local Id = child:GetAttribute("Id")
 
-										u66 = child
-										u67 = Id
+										foundRemoteEvent = child
+										foundRemoteId = Id
 									end
 								end)
 							end
 						end)
 
-						function CheckLocation(p9)
-							return p9 == LocalPlayer:GetAttribute("CurrentLocation")
+						function CheckLocation(locationName)
+							return locationName == LocalPlayer:GetAttribute("CurrentLocation")
 						end
-						function CheckMap(p10)
-							return workspace.Map:FindFirstChild(p10) or false
+						function CheckMap(mapName)
+							return workspace.Map:FindFirstChild(mapName) or false
 						end
-						function CheckTool(p11)
+						function CheckTool(toolName)
 							local _next = next
-							local t6 = {}
+							local containers = {}
 							local Backpack = LocalPlayer.Backpack
 
-							t6[1] = Backpack
-							t6[2] = Character
+							containers[1] = Backpack
+							containers[2] = Character
 
-							for _, v169 in _next, t6 do
-								for _, v in next, v169:GetChildren() do
-									if v:IsA("Tool") and (p11 == v.Name or v.Name:find(p11)) then
+							for _, container in _next, containers do
+								for _, v in next, container:GetChildren() do
+									if v:IsA("Tool") and (toolName == v.Name or v.Name:find(toolName)) then
 										return true
 									end
 								end
@@ -373,9 +373,9 @@ local function u12()
 
 							return false
 						end
-						function CheckMaterial(p12)
+						function CheckMaterial(materialName)
 							for _, v in pairs(COMMF_:InvokeServer("getInventory")) do
-								if v.Type == "Material" and p12 == v.Name then
+								if v.Type == "Material" and materialName == v.Name then
 									return v.Count
 								end
 							end
@@ -415,7 +415,7 @@ local function u12()
 
 							return false
 						end
-						function KillAura(p17)
+						function KillAura(targetName)
 							pcall(function()
 								setscriptable(LocalPlayer, "SimulationRadius", true)
 							end)
@@ -425,32 +425,32 @@ local function u12()
 
 							for _, v in next, workspace.Enemies:GetChildren() do
 								local _pcall = pcall
-								local u188 = v
-								local u189 = p17
+								local enemy = v
+								local targetFilter = targetName
 
 								pcall(function()
-									local v328 = u188:FindFirstChild("HumanoidRootPart") or false
+									local enemyRoot = enemy:FindFirstChild("HumanoidRootPart") or false
 
 									if
-										v328
+										enemyRoot
 										and HumanoidRootPart
-										and (v328.Position - HumanoidRootPart.Position).Magnitude <= 1250
-										and (u189 and u188.Name == u189 or not u189)
+										and (enemyRoot.Position - HumanoidRootPart.Position).Magnitude <= 1250
+										and (targetFilter and enemy.Name == targetFilter or not targetFilter)
 									then
-										u188:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Dead)
+										enemy:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Dead)
 									end
 								end)
 							end
 						end
 
-						local u69 = v65
+						local GetMapIndexRef = GetMapIndex
 
 						function CheckMoon()
-							local v190 = u69()
-							local v191 = (
-								v190 ~= 2
+							local mapIdx = GetMapIndexRef()
+							local moonAssetUrl = (
+								mapIdx ~= 2
 									and (game.Lighting:FindFirstChild("Sky") and game.Lighting.Sky.MoonTextureId or game.Lighting:FindFirstChild("Space_Skybox") and game.Lighting.Space_Skybox.MoonTextureId)
-								or (v190 == 2 and (game.Lighting:FindFirstChild("FantasySky") and game.Lighting.FantasySky.MoonTextureId) or "")
+								or (mapIdx == 2 and (game.Lighting:FindFirstChild("FantasySky") and game.Lighting.FantasySky.MoonTextureId) or "")
 							):gsub("rbxassetid://", "http://www.roblox.com/asset/?id=")
 
 							return ({
@@ -463,7 +463,7 @@ local function u12()
 								["http://www.roblox.com/asset/?id=9709150086"] = "2/8",
 								["http://www.roblox.com/asset/?id=9709139597"] = "1/8",
 								["http://www.roblox.com/asset/?id=9709149680"] = "0/8",
-							})[v191] or "nil"
+							})[moonAssetUrl] or "nil"
 						end
 						function CheckMonster(...)
 							local function v192(...)
@@ -474,7 +474,7 @@ local function u12()
 								return t9
 							end
 
-							local t10 = {}
+							local targetNames = {}
 
 							(function(p18, p19, p20, p21)
 								for i = p21, p20.n do
@@ -482,54 +482,54 @@ local function u12()
 
 									p18[i - p21 + p19] = v335
 								end
-							end)(t10, 1, v192(...), 1)
+							end)(targetNames, 1, v192(...), 1)
 
-							local t11 = {}
+							local searchRoots = {}
 							local Enemies = workspace.Enemies
 
-							t11[1] = Enemies
-							t11[2] = ReplicatedStorage
+							searchRoots[1] = Enemies
+							searchRoots[2] = ReplicatedStorage
 
-							for i = 1, #t10 do
-								local v198 = t10[i]
-								local v199 = workspace.Enemies:FindFirstChild(v198) or ReplicatedStorage:FindFirstChild(v198)
+							for i = 1, #targetNames do
+								local targetName3 = targetNames[i]
+								local foundEntity = workspace.Enemies:FindFirstChild(targetName3) or ReplicatedStorage:FindFirstChild(targetName3)
 
-								if v199 and v199:IsA("Model") and v199.Name ~= "Blank Buddy" then
-									local Humanoid2 = v199:FindFirstChildWhichIsA("Humanoid")
-									local HumanoidRootPart2 = v199:FindFirstChild("HumanoidRootPart")
+								if foundEntity and foundEntity:IsA("Model") and foundEntity.Name ~= "Blank Buddy" then
+									local enemyHumanoid = foundEntity:FindFirstChildWhichIsA("Humanoid")
+									local enemyRoot2 = foundEntity:FindFirstChild("HumanoidRootPart")
 
-									if Humanoid2 and HumanoidRootPart2 and Humanoid2.Health > 0 then
-										return v199
+									if enemyHumanoid and enemyRoot2 and enemyHumanoid.Health > 0 then
+										return foundEntity
 									end
 								end
 							end
 
 							local n1 = 1
 
-							for i = n1, #t11 do
-								local children = t11[i]:GetChildren()
+							for i = n1, #searchRoots do
+								local children = searchRoots[i]:GetChildren()
 
 								for j = 1, #children do
-									local v206 = children[j]
-									local Humanoid3 = v206:FindFirstChildWhichIsA("Humanoid")
-									local HumanoidRootPart3 = v206:FindFirstChild("HumanoidRootPart")
+									local entity = children[j]
+									local entityHumanoid = entity:FindFirstChildWhichIsA("Humanoid")
+									local entityRoot = entity:FindFirstChild("HumanoidRootPart")
 
-									if v206:IsA("Model") and Humanoid3 and HumanoidRootPart3 and Humanoid3.Health > 0 and v206.Name ~= "Blank Buddy" then
-										for k = 1, #t10 do
-											local v210 = t10[k]
+									if entity:IsA("Model") and entityHumanoid and entityRoot and entityHumanoid.Health > 0 and entity.Name ~= "Blank Buddy" then
+										for k = 1, #targetNames do
+											local targetName4 = targetNames[k]
 
-											if v210 == v206.Name then
-												return v206
+											if targetName4 == entity.Name then
+												return entity
 											end
 
-											local v211 = v206.Name:lower()
-											local v212 = v192(v210:lower())
-											local find = v211.find
+											local entityNameLower = entity.Name:lower()
+											local v212 = v192(targetName4:lower())
+											local find = entityNameLower.find
 
 											n1 = v212.n
 
-											if find(v211, unpack(v212, 1, n1)) then
-												return v206
+											if find(entityNameLower, unpack(v212, 1, n1)) then
+												return entity
 											end
 										end
 									end
@@ -538,13 +538,13 @@ local function u12()
 
 							return false
 						end
-						function EquipWeapon(p22)
+						function EquipWeapon(weaponTooltip)
 							if Character then
 								local Tool = Character:FindFirstChildWhichIsA("Tool")
 
-								if not Tool or not Tool.ToolTip or p22 ~= Tool.ToolTip then
+								if not Tool or not Tool.ToolTip or weaponTooltip ~= Tool.ToolTip then
 									for _, v in next, LocalPlayer.Backpack:GetChildren() do
-										if v:IsA("Tool") and p22 == v.ToolTip then
+										if v:IsA("Tool") and weaponTooltip == v.ToolTip then
 											Humanoid:EquipTool(v)
 
 											return
@@ -560,7 +560,7 @@ local function u12()
 
 						local timestamp = tick()
 
-						function FastAttack(p23)
+						function FastAttack(targetName2)
 							local function v222(...)
 								local t12 = { ... }
 
@@ -576,40 +576,40 @@ local function u12()
 								and Character:FindFirstChildWhichIsA("Tool")
 							then
 								if not (tick() - timestamp <= 0.01) then
-									local t13 = {}
+									local nearbyEnemies = {}
 
 									for _, v in next, workspace.Enemies:GetChildren() do
-										local Humanoid4 = v:FindFirstChildWhichIsA("Humanoid")
-										local HumanoidRootPart4 = v:FindFirstChild("HumanoidRootPart")
+										local enemyHumanoid2 = v:FindFirstChildWhichIsA("Humanoid")
+										local enemyRoot3 = v:FindFirstChild("HumanoidRootPart")
 
 										if
 											v ~= Character
 											and (
-												(p23 and p23 == v.Name or not p23)
-												and Humanoid4
-												and HumanoidRootPart4
-												and Humanoid4.Health > 0
-												and (HumanoidRootPart4.Position - HumanoidRootPart.Position).Magnitude <= 65
+												(targetName2 and targetName2 == v.Name or not targetName2)
+												and enemyHumanoid2
+												and enemyRoot3
+												and enemyHumanoid2.Health > 0
+												and (enemyRoot3.Position - HumanoidRootPart.Position).Magnitude <= 65
 											)
 										then
-											t13[#t13 + 1] = v
+											nearbyEnemies[#nearbyEnemies + 1] = v
 										end
 									end
 
 									local Net = ReplicatedStorage.Modules.Net
-									local t14 = {
+									local hitData = {
 										[2] = {},
 									}
 
-									for i = 1, #t13 do
-										local v231 = t13[i]
+									for i = 1, #nearbyEnemies do
+										local v231 = nearbyEnemies[i]
 										local v232 = v231:FindFirstChild("Head") or v231:FindFirstChild("HumanoidRootPart")
 
-										if not t14[1] then
-											t14[1] = v232
+										if not hitData[1] then
+											hitData[1] = v232
 										end
 
-										t14[2][#t14[2] + 1] = {
+										hitData[2][#hitData[2] + 1] = {
 											v231,
 											v232,
 										}
@@ -618,11 +618,11 @@ local function u12()
 									Net:FindFirstChild("RE/RegisterAttack"):FireServer()
 
 									local v233 = Net:FindFirstChild("RE/RegisterHit")
-									local v234 = v222(unpack(t14))
+									local v234 = v222(unpack(hitData))
 
 									v233:FireServer(unpack(v234, 1, v234.n))
 
-									local v243 = cloneref(u66)
+									local v243 = cloneref(foundRemoteEvent)
 									local v244 = string.gsub("RE/RegisterHit", ".", function(p24)
 										local byte = string.byte(p24)
 										local v339 = workspace:GetServerTimeNow() / 10 % 10
@@ -631,10 +631,10 @@ local function u12()
 
 										return (string.char(v341))
 									end)
-									local v245 = u67 + 909090
-									local v246 = u68 * 2
+									local v245 = foundRemoteId + 909090
+									local v246 = seedValue * 2
 									local v247 = bit32.bxor(v245, v246)
-									local v248 = v222(unpack(t14))
+									local v248 = v222(unpack(hitData))
 
 									v243:FireServer(v244, v247, unpack(v248, 1, v248.n))
 									timestamp = tick()
@@ -648,8 +648,8 @@ local function u12()
 
 						tick()
 
-						function IfTableHaveIndex(p25)
-							for _ in p25 do
+						function IfTableHaveIndex(iterable)
+							for _ in iterable do
 								return true
 							end
 						end
@@ -660,13 +660,13 @@ local function u12()
 						function GetServers()
 							if not timestamp2 or not (os.time() - timestamp2 < 60) then
 								for i = 1, 100 do
-									local v258 = game:GetService("ReplicatedStorage"):WaitForChild("__ServerBrowser"):InvokeServer(i)
+									local serverData = game:GetService("ReplicatedStorage"):WaitForChild("__ServerBrowser"):InvokeServer(i)
 
-									if IfTableHaveIndex(v258) then
+									if IfTableHaveIndex(serverData) then
 										timestamp2 = os.time()
-										u72 = v258
+										u72 = serverData
 
-										return v258
+										return serverData
 									end
 								end
 
@@ -675,71 +675,71 @@ local function u12()
 
 							return u72
 						end
-						function HopServer(_, p27, p28)
-							local t15 = {}
+						function HopServer(_, requireLowPop, regionFilter)
+							local serverList = {}
 
-							for v263, v264 in (GetServers()) do
-								local t16 = {
-									JobId = v263,
-									Players = v264.Count,
-									LastUpdate = v264.__LastUpdate,
-									Region = v264.Region,
+							for jobId, serverInfo in (GetServers()) do
+								local serverEntry = {
+									JobId = jobId,
+									Players = serverInfo.Count,
+									LastUpdate = serverInfo.__LastUpdate,
+									Region = serverInfo.Region,
 								}
 
-								table.insert(t15, t16)
+								table.insert(serverList, serverEntry)
 							end
 
-							local v266 = nil
+							local pickedServer = nil
 
-							for _ = 1, #t15 do
+							for _ = 1, #serverList do
 								while task.wait() do
-									v266 = t15[math.random(1, #t15)]
+									pickedServer = serverList[math.random(1, #serverList)]
 
-									if v266 and (not p27 or v266.Players < 5) and (not p28 or p28 == v266.Regoin) then
+									if pickedServer and (not requireLowPop or pickedServer.Players < 5) and (not regionFilter or regionFilter == pickedServer.Regoin) then
 										break
 									end
 								end
 
-								ReplicatedStorage:WaitForChild("__ServerBrowser"):InvokeServer("teleport", v266.JobId)
+								ReplicatedStorage:WaitForChild("__ServerBrowser"):InvokeServer("teleport", pickedServer.JobId)
 							end
 						end
-						function CheckLocation(p29)
-							return p29 == LocalPlayer:GetAttribute("CurrentLocation")
+						function CheckLocation(locationName2)
+							return locationName2 == LocalPlayer:GetAttribute("CurrentLocation")
 						end
-						function Tween(p30, p31)
-							if p30 ~= false then
-								local Character2 = LocalPlayer.Character
+						function Tween(targetCFrame, tweenSpeed)
+							if targetCFrame ~= false then
+								local char = LocalPlayer.Character
 
-								if not Character2 then
+								if not char then
 									pcall(function()
-										Character2 = LocalPlayer.CharacterAdded:Wait()
+										char = LocalPlayer.CharacterAdded:Wait()
 									end)
 								end
 
-								if Character2 then
-									local HumanoidRootPart5 = Character2:WaitForChild("HumanoidRootPart", 10)
-									local Humanoid5 = Character2:FindFirstChildOfClass("Humanoid")
+								if char then
+									local hrp = char:WaitForChild("HumanoidRootPart", 10)
+									local humanoid = char:FindFirstChildOfClass("Humanoid")
 
-									if HumanoidRootPart5 and Humanoid5 then
-										Humanoid5.Sit = false
+									if hrp and humanoid then
+										humanoid.Sit = false
 
-										local Magnitude = (p30.Position - HumanoidRootPart5.Position).Magnitude
+										local Magnitude = (targetCFrame.Position - hrp.Position).Magnitude
 
 										if not (Magnitude < 50) then
-											local v275 = Magnitude / (p31 or 300)
+											local tweenTime = Magnitude / (tweenSpeed or 300)
 											local Part = Instance.new("Part")
 
 											Part.Name = "TweenGhostFix"
 											Part.Transparency = 1
 											Part.Anchored = true
 											Part.CanCollide = false
-											Part.CFrame = HumanoidRootPart5.CFrame
+											Part.CFrame = hrp.CFrame
 											Part.Size = Vector3.new(2, 2, 2)
 											Part.Parent = workspace
 
 											local connection = RunService.Stepped:Connect(function()
-												if Character2 then
-													for _, descendant in ipairs(Character2:GetDescendants()) do
+												if char then
+													for _, descendant in ipairs(char:GetDescendants()) do
 														if descendant:IsA("BasePart") then
 															descendant.CanCollide = false
 														end
@@ -747,17 +747,17 @@ local function u12()
 												end
 											end)
 											local Heartbeat = RunService.Heartbeat
-											local u279 = HumanoidRootPart5
-											local u280 = Part
+											local hrpRef = hrp
+											local partRef = Part
 											local connection2 = Heartbeat:Connect(function()
-												if u279 and u280 then
-													u279.CFrame = u280.CFrame
-													u279.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-													u279.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+												if hrpRef and partRef then
+													hrpRef.CFrame = partRef.CFrame
+													hrpRef.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+													hrpRef.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
 												end
 											end)
-											local tween = TweenService:Create(Part, TweenInfo.new(v275, Enum.EasingStyle.Linear), {
-												CFrame = p30,
+											local tween = TweenService:Create(Part, TweenInfo.new(tweenTime, Enum.EasingStyle.Linear), {
+												CFrame = targetCFrame,
 											})
 
 											tween:Play()
@@ -775,12 +775,12 @@ local function u12()
 												Part:Destroy()
 											end
 
-											HumanoidRootPart5.CFrame = p30
+											hrp.CFrame = targetCFrame
 
 											return
 										end
 
-										HumanoidRootPart5.CFrame = p30
+										hrp.CFrame = targetCFrame
 
 										return
 									end
@@ -791,10 +791,10 @@ local function u12()
 								return
 							end
 						end
-						function BringMonster(p32, p33)
-							local u285 = p33 or 3
+						function BringMonster(targetName5, maxCount)
+							local count = maxCount or 3
 
-							if not (u285 < 2) then
+							if not (count < 2) then
 								pcall(function()
 									setscriptable(LocalPlayer, "SimulationRadius", true)
 								end)
@@ -803,64 +803,64 @@ local function u12()
 								end)
 
 								local _xpcall = xpcall
-								local u287 = p32
+								local targetNameRef = targetName5
 
 								xpcall(function()
-									local t17 = {}
-									local v345 = nil
+									local nearbyList = {}
+									local anchorCFrame = nil
 
 									for _, v in next, workspace.Enemies:GetChildren() do
-										local Humanoid6 = v:FindFirstChildWhichIsA("Humanoid")
-										local HumanoidRootPart6 = v:FindFirstChild("HumanoidRootPart")
+										local enemyHumanoid3 = v:FindFirstChildWhichIsA("Humanoid")
+										local enemyRoot4 = v:FindFirstChild("HumanoidRootPart")
 
 										if
-											Humanoid6
-											and HumanoidRootPart6
-											and Humanoid6.Health > 0
+											enemyHumanoid3
+											and enemyRoot4
+											and enemyHumanoid3.Health > 0
 											and (
-												(not u287 or v.Name == u287)
-												and (HumanoidRootPart.Position - HumanoidRootPart6.Position).Magnitude <= (u285 or 3) * 250
+												(not targetNameRef or v.Name == targetNameRef)
+												and (HumanoidRootPart.Position - enemyRoot4.Position).Magnitude <= (count or 3) * 250
 											)
 										then
 											local find = table.find
-											local u351 = HumanoidRootPart6
+											local enemyRootRef = enemyRoot4
 
 											if
-												not find(t17, function(p34)
-													local HumanoidRootPart7 = p34:FindFirstChild("HumanoidRootPart")
+												not find(nearbyList, function(existing)
+													local existingRoot = existing:FindFirstChild("HumanoidRootPart")
 
-													return HumanoidRootPart7 and (u351.Position - HumanoidRootPart7.Position).Magnitude <= 5
+													return existingRoot and (enemyRootRef.Position - existingRoot.Position).Magnitude <= 5
 												end)
 											then
-												local v352 = #t17 + 1
+												local newIndex = #nearbyList + 1
 
-												v345 = v345 or HumanoidRootPart6.CFrame
-												t17[v352] = v
+												anchorCFrame = anchorCFrame or enemyRoot4.CFrame
+												nearbyList[newIndex] = v
 											end
 
-											if #t17 >= (u285 or 3) then
+											if #nearbyList >= (count or 3) then
 												break
 											end
 										end
 									end
 
-									if v345 then
-										for i = 1, #t17 do
-											local HumanoidRootPart8 = t17[i]:FindFirstChild("HumanoidRootPart")
+									if anchorCFrame then
+										for i = 1, #nearbyList do
+											local listedRoot = nearbyList[i]:FindFirstChild("HumanoidRootPart")
 
-											t17[i]:FindFirstChildWhichIsA("Humanoid")
+											nearbyList[i]:FindFirstChildWhichIsA("Humanoid")
 
-											if HumanoidRootPart8 and (not isnetworkowner or isnetworkowner(HumanoidRootPart8)) then
-												HumanoidRootPart8.AssemblyLinearVelocity = Vector3.zero
-												HumanoidRootPart8.AssemblyAngularVelocity = Vector3.zero
-												HumanoidRootPart8.CFrame = v345 * CFrame.new((i - 1) * 2, 0, 0)
+											if listedRoot and (not isnetworkowner or isnetworkowner(listedRoot)) then
+												listedRoot.AssemblyLinearVelocity = Vector3.zero
+												listedRoot.AssemblyAngularVelocity = Vector3.zero
+												listedRoot.CFrame = anchorCFrame * CFrame.new((i - 1) * 2, 0, 0)
 											end
 										end
 
 										return
 									end
-								end, function(p35)
-									warn("Modules Error [BM]: " .. p35)
+								end, function(err2)
+									warn("Modules Error [BM]: " .. err2)
 								end)
 
 								return
@@ -869,36 +869,36 @@ local function u12()
 
 						local timestamp3 = tick()
 
-						function KillMonster(p36)
+						function KillMonster(targetName6)
 							local _xpcall = xpcall
-							local u290 = p36
+							local targetNameRef2 = targetName6
 
 							xpcall(function()
-								if workspace.Enemies:FindFirstChild(u290) then
+								if workspace.Enemies:FindFirstChild(targetNameRef2) then
 									for _, v in next, workspace.Enemies:GetChildren() do
-										local Humanoid7 = v:FindFirstChildWhichIsA("Humanoid")
-										local HumanoidRootPart9 = v:FindFirstChild("HumanoidRootPart")
+										local foundHumanoid = v:FindFirstChildWhichIsA("Humanoid")
+										local foundRoot = v:FindFirstChild("HumanoidRootPart")
 
-										if Humanoid7 and Humanoid7.Health > 0 and HumanoidRootPart9 and v.Name == u290 then
-											local v361 = HumanoidRootPart.Position.X - HumanoidRootPart9.Position.X
-											local v362 = HumanoidRootPart.Position.Y - HumanoidRootPart9.Position.Y
-											local v363 = HumanoidRootPart.Position.Z - HumanoidRootPart9.Position.Z
+										if foundHumanoid and foundHumanoid.Health > 0 and foundRoot and v.Name == targetNameRef2 then
+											local dx = HumanoidRootPart.Position.X - foundRoot.Position.X
+											local dy = HumanoidRootPart.Position.Y - foundRoot.Position.Y
+											local dz = HumanoidRootPart.Position.Z - foundRoot.Position.Z
 
-											if not (v361 * v361 + v362 * v362 + v363 * v363 <= 4900) then
-												Tween(HumanoidRootPart9.CFrame)
+											if not (dx * dx + dy * dy + dz * dz <= 4900) then
+												Tween(foundRoot.CFrame)
 
 												return
 											end
 
-											BringMonster(u290, 3)
-											FastAttack(u290)
+											BringMonster(targetNameRef2, 3)
+											FastAttack(targetNameRef2)
 
 											if tick() - timestamp3 >= 10 then
 												timestamp3 = tick()
 												ReplicatedStorage.Remotes.CommE:FireServer("Ken", true)
 											end
 
-											Tween(CFrame.new(HumanoidRootPart9.Position + Vector3.new(0, 15, 0)))
+											Tween(CFrame.new(foundRoot.Position + Vector3.new(0, 15, 0)))
 											EquipWeapon("Melee")
 
 											return
@@ -907,28 +907,28 @@ local function u12()
 								end
 
 								for _, v in next, ReplicatedStorage:GetChildren() do
-									local HumanoidRootPart10 = v:FindFirstChild("HumanoidRootPart")
+									local foundRoot2 = v:FindFirstChild("HumanoidRootPart")
 
-									if v:IsA("Model") and HumanoidRootPart10 and v.Name == u290 then
-										Tween(HumanoidRootPart10.CFrame)
+									if v:IsA("Model") and foundRoot2 and v.Name == targetNameRef2 then
+										Tween(foundRoot2.CFrame)
 
 										return
 									end
 								end
-							end, function(p37)
-								warn("Modules ERROR:", p37)
+							end, function(err3)
+								warn("Modules ERROR:", err3)
 							end)
 						end
 
-						local t18 = {
-							__index = function(_, p39)
+						local QuestNPCMeta = {
+							__index = function(_, questName)
 								local HumanoidRootPartPosition = HumanoidRootPart.Position
-								local v294 = nil
-								local v295 = nil
+								local closestDist = nil
+								local closestPos = nil
 								local NPCName = nil
 
 								for _, v in next, require(ReplicatedStorage.GuideModule).Data.NPCList do
-									if p39 == v.InternalQuestName then
+									if questName == v.InternalQuestName then
 										local vPosition = v.Position
 
 										if typeof(vPosition) ~= "Vector3" then
@@ -937,9 +937,9 @@ local function u12()
 													if typeof(v2) == "Vector3" then
 														local Magnitude = (v2 - HumanoidRootPartPosition).Magnitude
 
-														if not v294 or Magnitude < v294 then
-															v294 = Magnitude
-															v295 = v2
+														if not closestDist or Magnitude < closestDist then
+															closestDist = Magnitude
+															closestPos = v2
 															NPCName = v.NPCName
 														end
 													end
@@ -948,79 +948,79 @@ local function u12()
 										else
 											local Magnitude = (vPosition - HumanoidRootPartPosition).Magnitude
 
-											if not v294 or Magnitude < v294 then
-												v294 = Magnitude
-												v295 = vPosition
+											if not closestDist or Magnitude < closestDist then
+												closestDist = Magnitude
+												closestPos = vPosition
 												NPCName = v.NPCName
 											end
 										end
 									end
 								end
 
-								return v295 and {
-									Position = v295,
-									Meters = v294,
+								return closestPos and {
+									Position = closestPos,
+									Meters = closestDist,
 									RawNPCName = NPCName,
 								} or nil
 							end,
 						}
 
-						TableQuests = setmetatable({}, t18)
+						TableQuests = setmetatable({}, QuestNPCMeta)
 
-						local u75 = nil
+						local originalNotifyFunc = nil
 						local new = require(ReplicatedStorage.Notification).new
-						local u79 = v65
-						local u80 = v64
-						local v81 = v37(newcclosure(function(...)
-							local v304 = ({ ... })[1]
+						local GetMapIndexRef2 = GetMapIndex
+						local logFileNameRef = logFileName
+						local packedHookArgs = PackArgs(newcclosure(function(...)
+							local notifyText = ({ ... })[1]
 
-							if u79() == 2 then
+							if GetMapIndexRef2() == 2 then
 								if
-									not v304:lower():find("core brain")
-									and not v304:lower():find("supply a <core brain>")
+									not notifyText:lower():find("core brain")
+									and not notifyText:lower():find("supply a <core brain>")
 									and not CheckTool("Core Brain")
 									and not CheckTool("Microchip")
 								then
-									if v304:find("Microchip not found") then
+									if notifyText:find("Microchip not found") then
 										CyborgBlockPartUnlocked = "chest"
-										writefile(u80, "chest")
+										writefile(logFileNameRef, "chest")
 									end
 								else
 									CyborgBlockPartUnlocked = "unlock"
-									writefile(u80, "unlock")
+									writefile(logFileNameRef, "unlock")
 								end
 							end
 
-							return u75(...)
+							return originalNotifyFunc(...)
 						end))
 
-						u75 = hookfunction(new, unpack(v81, 1, v81.n))
+						originalNotifyFunc = hookfunction(new, unpack(packedHookArgs, 1, packedHookArgs.n))
 
-						local n2 = 0
-						local u83 = false
-						local u84 = false
+						local attackAttempts = 0
+						local hasFragments = false
+						local announcedStage2 = false
 						local spawn = task.spawn
-						local u86 = v65
-						local u87 = v64
+						local GetMapIndexRef3 = GetMapIndex
+						local logFileNameRef2 = logFileName
 
 						spawn(function()
-							if u86() == 2 and not u84 then
-								u63("Kaitun Get Cyborg A-Z")
+							if GetMapIndexRef3() == 2 and not announcedStage2 then
+								SetStatus("Kaitun Get Cyborg A-Z")
 								task.wait(2.5)
-								u84 = true
+								announcedStage2 = true
 							end
 
 							while task.wait(0.5) do
 								xpcall(function()
-									local v368 = u86()
+									local currentMapIdx = GetMapIndexRef3()
 
-									if v368 ~= 1 and v368 ~= 3 then
-										if v368 == 2 then
+									if currentMapIdx ~= 1 and currentMapIdx ~= 3 then
+										if currentMapIdx == 2 then
 											if LocalPlayer.Data.Race.Value == "Cyborg" and LocalPlayer.Data.Race:FindFirstChild("Evolved") then
-												local v369 = COMMF_:InvokeServer("Wenlocktoad")
+												local wenlocktoadResult = COMMF_:InvokeServer("Wenlocktoad")
 
-												if v369 == "You have already..." or v369 and type(v369) == "string" and v369:find("Complete") then
-													u63("DONE V3")
+												if wenlocktoadResult == "You have already..." or wenlocktoadResult and type(wenlocktoadResult) == "string" and wenlocktoadResult:find("Complete") then
+													SetStatus("DONE V3")
 
 													return
 												end
@@ -1036,7 +1036,7 @@ local function u12()
 												end)
 											end
 
-											CyborgBlockPartUnlocked = readfile(u87) or "NaN"
+											CyborgBlockPartUnlocked = readfile(logFileNameRef2) or "NaN"
 
 											if LocalPlayer.Data.Race.Value ~= "Cyborg" then
 												if
@@ -1045,28 +1045,28 @@ local function u12()
 												then
 													local FragmentsValue = LocalPlayer.Data.Fragments.Value
 
-													if not u83 then
+													if not hasFragments then
 														if FragmentsValue >= 2500 then
-															u83 = true
+															hasFragments = true
 														end
 													elseif FragmentsValue < 1000 then
-														u83 = false
+														hasFragments = false
 													end
 
-													if not u83 and not CheckMonster("Order") and not CheckTool("Microchip") then
-														u63("WAITING FOR FRAGMENTS")
+													if not hasFragments and not CheckMonster("Order") and not CheckTool("Microchip") then
+														SetStatus("WAITING FOR FRAGMENTS")
 														task.wait(2)
 
 														return
 													end
 
-													if u83 == false and LocalPlayer.Data.Fragments.Value >= 2500 then
-														u83 = true
+													if hasFragments == false and LocalPlayer.Data.Fragments.Value >= 2500 then
+														hasFragments = true
 													end
 
 													if not CheckMonster("Order") or CheckTool("Core Brain") then
 														if CheckTool("Core Brain") then
-															writefile(u87, "unlock")
+															writefile(logFileNameRef2, "unlock")
 															CyborgBlockPartUnlocked = "unlock"
 														end
 
@@ -1090,7 +1090,7 @@ local function u12()
 														then
 															repeat
 																task.wait(0.01)
-																u63("FARM ORDER BOSS")
+																SetStatus("FARM ORDER BOSS")
 																KillMonster(v.Name)
 															until not v
 																or not v:FindFirstChildWhichIsA("Humanoid")
@@ -1119,9 +1119,9 @@ local function u12()
 														return
 													end
 
-													local t19 = {}
+													local darkbeardQueue = {}
 
-													if n2 < 30 and not CheckTool("Fist of Darkness") then
+													if attackAttempts < 30 and not CheckTool("Fist of Darkness") then
 														for _, v in next, CollectionService:GetTagged("_ChestTagged") do
 															if v and v.CanTouch then
 																local Magnitude = (v.Position - HumanoidRootPart.Position).Magnitude
@@ -1130,21 +1130,21 @@ local function u12()
 																	dist = Magnitude,
 																}
 
-																table.insert(t19, t20)
+																table.insert(darkbeardQueue, t20)
 															end
 														end
 
-														table.sort(t19, function(p40, p41)
+														table.sort(darkbeardQueue, function(p40, p41)
 															return p40.dist < p41.dist
 														end)
 
 														if not CheckTool("Fist of Darkness") then
-															for k, v in next, t19 do
+															for k, v in next, darkbeardQueue do
 																local obj = v.obj
 
 																if obj:IsA("BasePart") and obj.Name:find("Chest") then
 																	if obj.CanTouch then
-																		u63("AUTO FARM CHEST")
+																		SetStatus("AUTO FARM CHEST")
 
 																		repeat
 																			task.wait()
@@ -1163,14 +1163,14 @@ local function u12()
 																			pcall(function()
 																				if Character.Humanoid.FloorMaterial == Enum.Material.Air then
 																					local find = table.find
-																					local t21 = {}
+																					local blockedStates = {}
 																					local Jumping = Enum.HumanoidStateType.Jumping
 																					local Dead = Enum.HumanoidStateType.Dead
 
-																					t21[1] = Jumping
-																					t21[2] = Dead
+																					blockedStates[1] = Jumping
+																					blockedStates[2] = Dead
 
-																					if find(t21, Character.Humanoid:GetState()) then
+																					if find(blockedStates, Character.Humanoid:GetState()) then
 																						return
 																					end
 																				end
@@ -1180,9 +1180,9 @@ local function u12()
 																			end)
 																		until not obj.CanTouch or CheckTool("Fist of Darkness")
 
-																		n2 = n2 + 1
+																		attackAttempts = attackAttempts + 1
 
-																		if n2 >= 30 or CheckTool("Fist of Darkness") or CheckMonster("Darkbeard") then
+																		if attackAttempts >= 30 or CheckTool("Fist of Darkness") or CheckMonster("Darkbeard") then
 																			break
 																		end
 																	end
@@ -1203,7 +1203,7 @@ local function u12()
 													end
 												end
 											elseif not LocalPlayer.Data.Race:FindFirstChild("Evolved") then
-												u63("UP V1->V2")
+												SetStatus("UP V1->V2")
 
 												if COMMF_:InvokeServer("Alchemist", "2") == "Come back when you find them." then
 													if CheckTool("Flower 1") or workspace.Flower1.Transparency ~= 0 then
@@ -1254,29 +1254,32 @@ local function u12()
 													end
 												end
 											else
-												local v385 = COMMF_:InvokeServer("Wenlocktoad")
+												local wenlocktoadResult2 = COMMF_:InvokeServer("Wenlocktoad")
 
-												if v385 ~= "You have already..." and (type(v385) ~= "string" or not v385:find("Complete")) then
-													u63("DONE CYBORG RACE")
+												if wenlocktoadResult2 ~= "You have already..." and (type(wenlocktoadResult2) ~= "string" or not wenlocktoadResult2:find("Complete")) then
+													SetStatus("DONE CYBORG RACE")
 
-													local v386 = COMMF_:InvokeServer("Wenlocktoad", "2")
+													local wenlocktoadResult3 = COMMF_:InvokeServer("Wenlocktoad", "2")
 
 													if
-														typeof(v386) == "string"
-														and (v386:lower():find("fruit") or v386:find("haven't completed") or v386:find("Talk to me again"))
+														typeof(wenlocktoadResult3) == "string"
+														and (wenlocktoadResult3:lower():find("fruit") or wenlocktoadResult3:find("haven't completed") or wenlocktoadResult3:find("Talk to me again"))
 													then
 														local vName = nil
 														local huge = math.huge
+														local inventoryResult = COMMF_:InvokeServer("getInventory")
 
-														for _, v in next, COMMF_:InvokeServer("getInventory") do
-															if v.Type == "Blox Fruit" and huge > v.Value then
-																huge = v.Value
-																vName = v.Name
+														if type(inventoryResult) == "table" then
+															for _, v in next, inventoryResult do
+																if v.Type == "Blox Fruit" and huge > v.Value then
+																	huge = v.Value
+																	vName = v.Name
+																end
 															end
 														end
 
 														if vName then
-															u63("Submitting Fruit for V3")
+															SetStatus("Submitting Fruit for V3")
 															COMMF_:InvokeServer("LoadFruit", vName)
 															task.wait(1)
 															COMMF_:InvokeServer("Wenlocktoad", "3")
@@ -1315,13 +1318,13 @@ local function u12()
 										return
 									end
 
-									u63("Kaitun Get Cyborg A-Z")
+									SetStatus("Kaitun Get Cyborg A-Z")
 									task.wait(1.5)
-									u63("Travel to sea 2")
+									SetStatus("Travel to sea 2")
 									task.wait(1)
 
-									if v368 ~= 1 then
-										if v368 == 3 then
+									if currentMapIdx ~= 1 then
+										if currentMapIdx == 3 then
 											COMMF_:InvokeServer("TravelDressrosa")
 										end
 
@@ -1357,10 +1360,10 @@ local function u12()
 											if
 												not CollectionService:HasTag(Character, v)
 												and LocalPlayer.Data.Beli.Value
-													>= (function(p42)
-														if p42 ~= "Geppo" then
-															if p42 ~= "Buso" then
-																if p42 ~= "Soru" then
+													>= (function(skillName)
+														if skillName ~= "Geppo" then
+															if skillName ~= "Buso" then
+																if skillName ~= "Soru" then
 																	return 0
 																end
 
@@ -1386,7 +1389,7 @@ local function u12()
 						end)
 
 						local ErrorMessageChanged = GuiService.ErrorMessageChanged
-						local v89 = v37(newcclosure(function()
+						local packedErrorHookArgs = PackArgs(newcclosure(function()
 							if GuiService:GetErrorType() ~= Enum.ConnectionError.DisconnectErrors then
 								return
 							end
@@ -1397,41 +1400,41 @@ local function u12()
 							end
 						end))
 
-						ErrorMessageChanged:Connect(unpack(v89, 1, v89.n))
+						ErrorMessageChanged:Connect(unpack(packedErrorHookArgs, 1, packedErrorHookArgs.n))
 
 						return
 					end
 
-					v38 = cloneref(Workspace)
+					workspaceRef = cloneref(Workspace)
 
-					if v38 then
-						g39 = true
+					if workspaceRef then
+						workspaceFound = true
 					end
-				until not g39
+				until not workspaceFound
 
 				if getrenv then
-					v38 = getrenv().workspace
+					workspaceRef = getrenv().workspace
 
-					if v38 then
-						g39 = true
+					if workspaceRef then
+						workspaceFound = true
 					end
 
-					if not g39 then
-						v38 = getrenv().Workspace
+					if not workspaceFound then
+						workspaceRef = getrenv().Workspace
 
-						if v38 then
-							g39 = true
+						if workspaceRef then
+							workspaceFound = true
 						end
 					end
 				end
-			until not g39
-		until not g39
-		local v93 = v37(game:GetService("Workspace"))
+			until not workspaceFound
+		until not workspaceFound
+		local packedWorkspaceArgs = PackArgs(game:GetService("Workspace"))
 
-		v38 = cloneref(unpack(v93, 1, v93.n))
-		g39 = true
-	until not g39
+		workspaceRef = cloneref(unpack(packedWorkspaceArgs, 1, packedWorkspaceArgs.n))
+		workspaceFound = true
+	until not workspaceFound
 end
 
 
-u12()
+RunMainScript()
