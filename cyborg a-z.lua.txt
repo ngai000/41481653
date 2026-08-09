@@ -243,7 +243,7 @@ local function RunMainScript()
 
 						local titleLabel = CreateLabel("vô danh", UDim2.new(0, 0, 0, 20), 28)
 						local subtitleLabel = CreateLabel("Kaitun Get Cyborg A-Z", UDim2.new(0, 0, 0, 70), 28)
-						local discordLabel = CreateLabel("https://discord.gg/.....", UDim2.new(0, 0, 0, 120), 16)
+						local discordLabel = CreateLabel("- Fix auto v3 | - Fix hop sever", UDim2.new(0, 0, 0, 120), 16)
 						local RenderStepped = RunService.RenderStepped
 						local frameStroke = UIStroke
 						local titleLabelRef = titleLabel
@@ -1308,7 +1308,7 @@ local function RunMainScript()
 													end
 												end
 											elseif not LocalPlayer.Data.Race:FindFirstChild("Evolved") then
-												SetStatus("UP V1->V3")
+												SetStatus("UP V1 to V3")
 
 												if COMMF_:InvokeServer("Alchemist", "2") == "Come back when you find them." then
 													if CheckTool("Flower 1") or workspace.Flower1.Transparency ~= 0 then
