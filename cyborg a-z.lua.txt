@@ -120,7 +120,7 @@ local function RunMainScript()
 						end
 
 						StarterGui:SetCore("SendNotification", {
-							Title = "Maris Hub",
+							Title = "Vô danh",
 							Text = "Loading… Please wait",
 							Duration = 5,
 						})
@@ -152,8 +152,8 @@ local function RunMainScript()
 									end)
 									task.delay(5, function()
 										StarterGui:SetCore("SendNotification", {
-											Title = "Incompatible Executor",
-											Text = "This executor may cause errors while running the script\n[ERROR CODE: UIGE]",
+											Title = "Cảnh báo ⚠️",
+											Text = "Trình thực thi này có thể gây ra lỗi trong quá trình chạy tập lệnh.\n[ERROR CODE: UIGE]",
 											Duration = 20,
 										})
 									end)
@@ -241,9 +241,9 @@ local function RunMainScript()
 							return TextLabel
 						end
 
-						local titleLabel = CreateLabel("MARIS HUB", UDim2.new(0, 0, 0, 20), 28)
+						local titleLabel = CreateLabel("Vô Danh", UDim2.new(0, 0, 0, 20), 28)
 						local subtitleLabel = CreateLabel("Kaitun Get Cyborg A-Z", UDim2.new(0, 0, 0, 70), 28)
-						local discordLabel = CreateLabel("https://discord.gg/vNWPpQUVuV", UDim2.new(0, 0, 0, 120), 16)
+						local discordLabel = CreateLabel("Fix auto v3", UDim2.new(0, 0, 0, 120), 16)
 						local RenderStepped = RunService.RenderStepped
 						local frameStroke = UIStroke
 						local titleLabelRef = titleLabel
