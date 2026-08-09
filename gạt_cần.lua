@@ -9,7 +9,7 @@ local LocalPlayer = Players.LocalPlayer
 local Locations = Workspace:WaitForChild("_WorldOrigin"):WaitForChild("Locations")
 
 -- Config
-_G.HighestMirage = true
+_G.HighestMirage = true -- Mặc định TẮT tự động bay lên đỉnh đảo
 _G.AutoInteractGear = true 
 
 local TWEEN_SPEED = 300
@@ -22,7 +22,7 @@ local MirageDetected = false
 local CurrentTween = nil
 local IsArrived = false
 local FloatBV = nil
-local IsTPingGear = false -- Cờ trạng thái cho nút bấm TP Gear
+local IsTPingGear = false
 
 local function Notify(title, text)
     pcall(function()
@@ -142,7 +142,6 @@ local function TweenTo(targetCFrame)
             CurrentTween:Cancel()
             CurrentTween = nil
         end
-        DisableNoclipAndFloat()
         return true
     end
 
@@ -225,7 +224,7 @@ local function CheckMirage()
     end
 end
 
--- 5. UI Nút Bấm TP Gear
+-- 5. UI Khởi tạo
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "GearToggleGui"
 ScreenGui.ResetOnSpawn = false
@@ -234,6 +233,7 @@ pcall(function()
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end)
 
+-- 5.1 Nút Bấm TP Gear
 local ActionBtn = Instance.new("TextButton")
 ActionBtn.Name = "TPGearBtn"
 ActionBtn.Size = UDim2.new(0, 140, 0, 40)
@@ -245,11 +245,27 @@ ActionBtn.Font = Enum.Font.SourceSansBold
 ActionBtn.Text = "TP To Gear"
 ActionBtn.Parent = ScreenGui
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 8)
-Corner.Parent = ActionBtn
+local Corner1 = Instance.new("UICorner")
+Corner1.CornerRadius = UDim.new(0, 8)
+Corner1.Parent = ActionBtn
 
--- Xử lý sự kiện khi bấm nút TP Gear
+-- 5.2 Nút Công tắc Auto Mirage
+local MirageToggleBtn = Instance.new("TextButton")
+MirageToggleBtn.Name = "MirageToggleBtn"
+MirageToggleBtn.Size = UDim2.new(0, 140, 0, 40)
+MirageToggleBtn.Position = UDim2.new(0, 20, 0.4, 48) -- Nằm ngay bên dưới nút TP Gear
+MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+MirageToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MirageToggleBtn.TextSize = 14
+MirageToggleBtn.Font = Enum.Font.SourceSansBold
+MirageToggleBtn.Text = "Auto Mirage: OFF"
+MirageToggleBtn.Parent = ScreenGui
+
+local Corner2 = Instance.new("UICorner")
+Corner2.CornerRadius = UDim.new(0, 8)
+Corner2.Parent = MirageToggleBtn
+
+-- Sự kiện Click Nút TP Gear
 ActionBtn.MouseButton1Click:Connect(function()
     if IsTPingGear then return end
 
@@ -278,7 +294,6 @@ ActionBtn.MouseButton1Click:Connect(function()
         if gearPart then
             Notify("⚙️ TP Gear", "Đã tìm thấy Gear! Đang di chuyển...")
             
-            -- Thực hiện Tween cho tới khi tới đích
             while gearPart and gearPart.Parent and IsTPingGear do
                 local arrived = TweenTo(gearPart.CFrame * CFrame.new(0, 2, 0))
                 
@@ -291,6 +306,7 @@ ActionBtn.MouseButton1Click:Connect(function()
                         end
                     end
                     Notify("⚙️ TP Gear", "Đã tới vị trí Gear!")
+                    DisableNoclipAndFloat()
                     break
                 end
                 task.wait(0.1)
@@ -299,40 +315,67 @@ ActionBtn.MouseButton1Click:Connect(function()
             Notify("⚙️ TP Gear", "Chưa tìm thấy Gear trên đảo!")
         end
 
-        -- Hoàn tất tác vụ, khôi phục trạng thái nút bấm
         IsTPingGear = false
         ActionBtn.Text = "TP To Gear"
         ActionBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
     end)
 end)
 
--- 6. Task Logic Vận Hành (Chỉ giữ lại logic lên đỉnh đảo tự động)
+-- Sự kiện Click Nút Auto Mirage
+MirageToggleBtn.MouseButton1Click:Connect(function()
+    _G.HighestMirage = not _G.HighestMirage
+    
+    if _G.HighestMirage then
+        MirageToggleBtn.Text = "Auto Mirage: ON"
+        MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
+        Notify("🌴 Auto Mirage", "Đã BẬT tự động đến đỉnh Mirage Island")
+    else
+        MirageToggleBtn.Text = "Auto Mirage: OFF"
+        MirageToggleBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+        
+        -- Reset trạng thái ngay lập tức khi tắt
+        IsArrived = false
+        if CurrentTween then
+            CurrentTween:Cancel()
+            CurrentTween = nil
+        end
+        DisableNoclipAndFloat()
+        Notify("🌴 Auto Mirage", "Đã TẮT - Khôi phục di chuyển bình thường")
+    end
+end)
+
+-- 6. Task Logic Vận Hành
 task.spawn(function()
     while task.wait(0.1) do
         if Locations:FindFirstChild("Mirage Island") then
-            -- Nếu đang trong tiến trình TP Gear thì tạm hoãn bay lên đỉnh đảo
-            if not IsTPingGear and _G.HighestMirage and not IsArrived then
+            -- Chỉ chạy nếu BẬT Auto Mirage và KHÔNG trong quá trình TP Gear
+            if _G.HighestMirage and not IsTPingGear then
                 pcall(function()
                     local mapMystic = Workspace.Map:FindFirstChild("MysticIsland")
                     if mapMystic and mapMystic:FindFirstChild("Center") then
                         local targetPos = mapMystic.Center.CFrame * CFrame.new(0, 400, 0)
                         local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                         
-                        if hrp and (hrp.Position - targetPos.Position).Magnitude <= 10 then
-                            IsArrived = true
-                            if CurrentTween then 
-                                CurrentTween:Cancel() 
-                                CurrentTween = nil
+                        if hrp then
+                            local distance = (hrp.Position - targetPos.Position).Magnitude
+                            if distance <= 10 then
+                                IsArrived = true
+                                if CurrentTween then 
+                                    CurrentTween:Cancel() 
+                                    CurrentTween = nil
+                                end
+                                -- Giữ lơ lửng tại chỗ khi đã tới đỉnh, không rơi
+                                EnableNoclipAndFloat() 
+                            else
+                                IsArrived = false
+                                TweenTo(targetPos)
                             end
-                            DisableNoclipAndFloat()
-                        else
-                            TweenTo(targetPos)
                         end
                     end
                 end)
             end
         else
-            if not IsTPingGear then
+            if not IsTPingGear and not _G.HighestMirage then
                 DisableNoclipAndFloat()
             end
         end
