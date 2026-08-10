@@ -1,5 +1,6 @@
 -- ========================================================
 -- AUTO UPGRADE RACE V1 -> V2 -> V3 (Auto-Detect Race + GUI Monitor)
+-- BẢN SỬA LỖI: GUI không còn làm crash toàn bộ script nếu fail.
 -- Tự động nhận diện tộc hiện tại (plr.Data.Race.Value)
 -- tích hợp GUI hiển thị Trạng thái Tộc, Tiến độ Action & Debug Log.
 -- ========================================================
@@ -13,24 +14,73 @@ v8:AddToggle({
         _G.Auto_UpgradeRace = Value
         _G.SaveData["Auto_UpgradeRace_Save"] = Value
         SaveSettings()
-        if _G.RaceMonitorUI then
+        if _G.RaceMonitorUI and _G.RaceMonitorUI.MainFrame then
             _G.RaceMonitorUI.MainFrame.Visible = Value
         end
     end
 })
 
 -- ========================================================
+-- HÀM TÌM NƠI PARENT GUI AN TOÀN (fix lỗi Delta Executor / mobile)
+-- Ưu tiên: gethui() (hidden UI của executor) -> CoreGui -> PlayerGui
+-- ========================================================
+
+local function GetSafeGuiParent()
+    -- 1) Executor hỗ trợ gethui() (Delta, Synapse, v.v.)
+    if typeof(gethui) == "function" then
+        local ok, container = pcall(gethui)
+        if ok and container then
+            return container
+        end
+    end
+
+    -- 2) Thử CoreGui trực tiếp (có thể bị chặn trên 1 số executor mobile)
+    local ok2, coreGui = pcall(function()
+        return game:GetService("CoreGui")
+    end)
+    if ok2 and coreGui then
+        -- test thử có index/ghi được không
+        local okTest = pcall(function()
+            return coreGui:FindFirstChild("__test__")
+        end)
+        if okTest then
+            return coreGui
+        end
+    end
+
+    -- 3) Fallback cuối: PlayerGui (luôn hoạt động, dù kém ẩn hơn)
+    local ok3, playerGui = pcall(function()
+        return plr:WaitForChild("PlayerGui")
+    end)
+    if ok3 and playerGui then
+        return playerGui
+    end
+
+    return nil
+end
+
+-- ========================================================
 -- KHOI TAO GUI MONITOR / LOG / DEBUG
+-- (toàn bộ được bọc pcall bên ngoài khi gọi - xem cuối file)
 -- ========================================================
 
 local function CreateRaceMonitorGUI()
-    if game.CoreGui:FindFirstChild("RaceMonitorGUI") then
-        game.CoreGui.RaceMonitorGUI:Destroy()
+    local parentContainer = GetSafeGuiParent()
+    if not parentContainer then
+        warn("[Auto Upgrade Race] Không tìm được nơi parent GUI (gethui/CoreGui/PlayerGui đều fail)")
+        return nil
+    end
+
+    local existing = parentContainer:FindFirstChild("RaceMonitorGUI")
+    if existing then
+        existing:Destroy()
     end
 
     local gui = Instance.new("ScreenGui")
     gui.Name = "RaceMonitorGUI"
     gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.DisplayOrder = 999
 
     local main = Instance.new("Frame")
     main.Name = "MainFrame"
@@ -43,12 +93,14 @@ local function CreateRaceMonitorGUI()
     main.Visible = _G.Auto_UpgradeRace or false
     main.Parent = gui
 
-    local corner = Instance.new("UICorner", main)
+    local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = main
 
-    local stroke = Instance.new("UIStroke", main)
+    local stroke = Instance.new("UIStroke")
     stroke.Color = Color3.fromRGB(60, 60, 80)
     stroke.Thickness = 1.5
+    stroke.Parent = main
 
     -- Title
     local title = Instance.new("TextLabel")
@@ -103,13 +155,18 @@ local function CreateRaceMonitorGUI()
     logLayout.Padding = UDim.new(0, 2)
     logLayout.Parent = logFrame
 
-    -- Auto-scroll log layout
     logLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         logFrame.CanvasSize = UDim2.new(0, 0, 0, logLayout.AbsoluteContentSize.Y)
         logFrame.CanvasPosition = Vector2.new(0, logLayout.AbsoluteContentSize.Y)
     end)
 
-    pcall(function() gui.Parent = game.CoreGui end)
+    local okParent, errParent = pcall(function()
+        gui.Parent = parentContainer
+    end)
+    if not okParent then
+        warn("[Auto Upgrade Race] Không thể parent GUI: " .. tostring(errParent))
+        return nil
+    end
 
     return {
         MainFrame = main,
@@ -119,38 +176,56 @@ local function CreateRaceMonitorGUI()
     }
 end
 
-_G.RaceMonitorUI = CreateRaceMonitorGUI()
+-- GUI được tạo có bảo vệ: nếu fail, chỉ mất phần hiển thị,
+-- KHÔNG được phép làm chết phần logic auto upgrade race bên dưới.
+local guiOk, guiResult = pcall(CreateRaceMonitorGUI)
+if guiOk and guiResult then
+    _G.RaceMonitorUI = guiResult
+else
+    _G.RaceMonitorUI = nil
+    warn("[Auto Upgrade Race] GUI Monitor không khởi tạo được, script vẫn chạy farm bình thường (không có GUI). Lỗi: " .. tostring(guiResult))
+end
 
--- Update UI Helper Functions
+-- Update UI Helper Functions (an toàn khi _G.RaceMonitorUI = nil)
 local function UpdateMonitorUI(raceText, actionText)
     if not _G.RaceMonitorUI then return end
-    if raceText then _G.RaceMonitorUI.RaceStatus.Text = "Tộc: " .. raceText end
-    if actionText then _G.RaceMonitorUI.ActionStatus.Text = "Hành động: " .. actionText end
+    local ok = pcall(function()
+        if raceText then _G.RaceMonitorUI.RaceStatus.Text = "Tộc: " .. raceText end
+        if actionText then _G.RaceMonitorUI.ActionStatus.Text = "Hành động: " .. actionText end
+    end)
 end
 
 local function AddLog(msg, logType)
-    if not _G.RaceMonitorUI then return end
-
-    local timeStr = os.date("%H:%M:%S")
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -5, 0, 14)
-    lbl.BackgroundTransparency = 1
-    lbl.TextSize = 11
-    lbl.Font = Enum.Font.Code
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    if logType == "error" or logType == "warn" then
-        lbl.TextColor3 = Color3.fromRGB(255, 80, 80)
-        lbl.Text = "[" .. timeStr .. "] [ERR] " .. msg
-    elseif logType == "success" then
-        lbl.TextColor3 = Color3.fromRGB(80, 255, 120)
-        lbl.Text = "[" .. timeStr .. "] [OK] " .. msg
-    else
-        lbl.TextColor3 = Color3.fromRGB(180, 180, 180)
-        lbl.Text = "[" .. timeStr .. "] [INFO] " .. msg
+    if not _G.RaceMonitorUI then
+        -- Không có GUI -> vẫn in ra console để debug được
+        if logType == "error" or logType == "warn" then
+            warn("[Auto Upgrade Race] " .. tostring(msg))
+        end
+        return
     end
 
-    lbl.Parent = _G.RaceMonitorUI.LogFrame
+    pcall(function()
+        local timeStr = os.date("%H:%M:%S")
+        local lbl = Instance.new("TextLabel")
+        lbl.Size = UDim2.new(1, -5, 0, 14)
+        lbl.BackgroundTransparency = 1
+        lbl.TextSize = 11
+        lbl.Font = Enum.Font.Code
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+
+        if logType == "error" or logType == "warn" then
+            lbl.TextColor3 = Color3.fromRGB(255, 80, 80)
+            lbl.Text = "[" .. timeStr .. "] [ERR] " .. msg
+        elseif logType == "success" then
+            lbl.TextColor3 = Color3.fromRGB(80, 255, 120)
+            lbl.Text = "[" .. timeStr .. "] [OK] " .. msg
+        else
+            lbl.TextColor3 = Color3.fromRGB(180, 180, 180)
+            lbl.Text = "[" .. timeStr .. "] [INFO] " .. msg
+        end
+
+        lbl.Parent = _G.RaceMonitorUI.LogFrame
+    end)
 end
 
 -- ========================================================
@@ -351,7 +426,7 @@ spawn(function()
         else
             local errStatus, errMessage = pcall(function()
                 local currentRace = GetCurrentRace()
-                
+
                 if not currentRace then
                     UpdateMonitorUI("[ KHÔNG XÁC ĐỊNH ]", "Lỗi đọc dữ liệu tộc")
                     AddLog("Không tìm thấy plr.Data.Race.Value", "error")
