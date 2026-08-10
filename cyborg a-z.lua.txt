@@ -203,52 +203,164 @@ local function RunMainScript()
 
 						ScreenGui.Name = "vô danh"
 						ScreenGui.ResetOnSpawn = false
+						ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 						local Frame = Instance.new("Frame", ScreenGui)
 
-						Frame.Size = UDim2.new(0, 360, 0, 180)
-						Frame.Position = UDim2.new(0.5, -180, 0.5, -90)
-						Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-						Frame.BackgroundTransparency = 0.2
+						Frame.Size = UDim2.new(0, 340, 0, 250)
+						Frame.Position = UDim2.new(0.5, -170, 0.5, -125)
+						Frame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+						Frame.BackgroundTransparency = 0.05
 						Frame.BorderSizePixel = 0
 						Frame.Active = true
 						Frame.Draggable = true
-						Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 15)
+						Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 16)
 
 						local UIStroke = Instance.new("UIStroke", Frame)
 
-						UIStroke.Thickness = 4
+						UIStroke.Thickness = 2.5
 						UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
 						local mainFrame = Frame
 
-						local function CreateLabel(text, position, textSize)
-							local TextLabel = Instance.new("TextLabel", mainFrame)
+						-- Thanh tiêu đề (hub name)
+						local HeaderFrame = Instance.new("Frame", mainFrame)
 
-							TextLabel.Size = UDim2.new(1, 0, 0, 40)
-							TextLabel.Position = position
-							TextLabel.BackgroundTransparency = 1
-							TextLabel.Text = text
-							TextLabel.Font = Enum.Font.GothamBold
-							TextLabel.TextSize = textSize
-							TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+						HeaderFrame.Size = UDim2.new(1, 0, 0, 56)
+						HeaderFrame.Position = UDim2.new(0, 0, 0, 0)
+						HeaderFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 13)
+						HeaderFrame.BorderSizePixel = 0
+						Instance.new("UICorner", HeaderFrame).CornerRadius = UDim.new(0, 16)
 
-							local UIStroke2 = Instance.new("UIStroke", TextLabel)
+						local HeaderFix = Instance.new("Frame", HeaderFrame)
 
-							UIStroke2.Color = Color3.fromRGB(0, 0, 0)
-							UIStroke2.Thickness = 2
+						HeaderFix.Size = UDim2.new(1, 0, 0, 16)
+						HeaderFix.Position = UDim2.new(0, 0, 1, -16)
+						HeaderFix.BackgroundColor3 = Color3.fromRGB(10, 10, 13)
+						HeaderFix.BorderSizePixel = 0
+						HeaderFix.ZIndex = 0
 
-							return TextLabel
+						local titleLabel = Instance.new("TextLabel", HeaderFrame)
+
+						titleLabel.Size = UDim2.new(1, -20, 0, 30)
+						titleLabel.Position = UDim2.new(0, 14, 0, 6)
+						titleLabel.BackgroundTransparency = 1
+						titleLabel.Text = "vô danh"
+						titleLabel.Font = Enum.Font.GothamBold
+						titleLabel.TextSize = 22
+						titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+						titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+						local subtitleLabel = Instance.new("TextLabel", HeaderFrame)
+
+						subtitleLabel.Size = UDim2.new(1, -20, 0, 18)
+						subtitleLabel.Position = UDim2.new(0, 14, 0, 34)
+						subtitleLabel.BackgroundTransparency = 1
+						subtitleLabel.Text = "Kaitun Get Cyborg A-Z"
+						subtitleLabel.Font = Enum.Font.Gotham
+						subtitleLabel.TextSize = 14
+						subtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+						subtitleLabel.TextColor3 = Color3.fromRGB(150, 220, 255)
+
+						-- Dòng trạng thái (SetStatus)
+						local StatusFrame = Instance.new("Frame", mainFrame)
+
+						StatusFrame.Size = UDim2.new(1, -28, 0, 34)
+						StatusFrame.Position = UDim2.new(0, 14, 0, 64)
+						StatusFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+						StatusFrame.BorderSizePixel = 0
+						Instance.new("UICorner", StatusFrame).CornerRadius = UDim.new(0, 10)
+
+						local StatusDot = Instance.new("Frame", StatusFrame)
+
+						StatusDot.Size = UDim2.new(0, 8, 0, 8)
+						StatusDot.Position = UDim2.new(0, 12, 0.5, -4)
+						StatusDot.BackgroundColor3 = Color3.fromRGB(80, 255, 140)
+						StatusDot.BorderSizePixel = 0
+						Instance.new("UICorner", StatusDot).CornerRadius = UDim.new(1, 0)
+
+						local statusLabel = Instance.new("TextLabel", StatusFrame)
+
+						statusLabel.Size = UDim2.new(1, -32, 1, 0)
+						statusLabel.Position = UDim2.new(0, 28, 0, 0)
+						statusLabel.BackgroundTransparency = 1
+						statusLabel.Text = "Đang khởi động..."
+						statusLabel.Font = Enum.Font.GothamMedium
+						statusLabel.TextSize = 15
+						statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+						statusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+						statusLabel.TextTruncate = Enum.TextTruncate.AtEnd
+
+						-- Khu vực hiển thị các mục fix
+						local FixHeaderLabel = Instance.new("TextLabel", mainFrame)
+
+						FixHeaderLabel.Size = UDim2.new(1, -28, 0, 18)
+						FixHeaderLabel.Position = UDim2.new(0, 14, 0, 106)
+						FixHeaderLabel.BackgroundTransparency = 1
+						FixHeaderLabel.Text = "CẬP NHẬT GẦN ĐÂY"
+						FixHeaderLabel.Font = Enum.Font.GothamBold
+						FixHeaderLabel.TextSize = 12
+						FixHeaderLabel.TextXAlignment = Enum.TextXAlignment.Left
+						FixHeaderLabel.TextColor3 = Color3.fromRGB(140, 140, 150)
+
+						local FixListFrame = Instance.new("Frame", mainFrame)
+
+						FixListFrame.Size = UDim2.new(1, -28, 0, 110)
+						FixListFrame.Position = UDim2.new(0, 14, 0, 128)
+						FixListFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
+						FixListFrame.BorderSizePixel = 0
+						Instance.new("UICorner", FixListFrame).CornerRadius = UDim.new(0, 10)
+
+						local FixListLayout = Instance.new("UIListLayout", FixListFrame)
+
+						FixListLayout.FillDirection = Enum.FillDirection.Vertical
+						FixListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+						FixListLayout.Padding = UDim.new(0, 2)
+
+						local FixListPadding = Instance.new("UIPadding", FixListFrame)
+
+						FixListPadding.PaddingTop = UDim.new(0, 8)
+						FixListPadding.PaddingLeft = UDim.new(0, 10)
+						FixListPadding.PaddingRight = UDim.new(0, 10)
+
+						local function CreateFixRow(text, order)
+							local Row = Instance.new("Frame", FixListFrame)
+
+							Row.Size = UDim2.new(1, 0, 0, 26)
+							Row.BackgroundTransparency = 1
+							Row.LayoutOrder = order
+
+							local Check = Instance.new("TextLabel", Row)
+
+							Check.Size = UDim2.new(0, 18, 1, 0)
+							Check.Position = UDim2.new(0, 0, 0, 0)
+							Check.BackgroundTransparency = 1
+							Check.Text = "✔"
+							Check.Font = Enum.Font.GothamBold
+							Check.TextSize = 15
+							Check.TextColor3 = Color3.fromRGB(90, 230, 150)
+
+							local Label = Instance.new("TextLabel", Row)
+
+							Label.Size = UDim2.new(1, -20, 1, 0)
+							Label.Position = UDim2.new(0, 20, 0, 0)
+							Label.BackgroundTransparency = 1
+							Label.Text = text
+							Label.Font = Enum.Font.Gotham
+							Label.TextSize = 14
+							Label.TextXAlignment = Enum.TextXAlignment.Left
+							Label.TextColor3 = Color3.fromRGB(220, 220, 225)
+
+							return Row
 						end
 
-						local titleLabel = CreateLabel("vô danh", UDim2.new(0, 0, 0, 20), 28)
-						local subtitleLabel = CreateLabel("Kaitun Get Cyborg A-Z", UDim2.new(0, 0, 0, 70), 28)
-						local discordLabel = CreateLabel("- Fix auto v3 | - Fix hop sever", UDim2.new(0, 0, 0, 120), 16)
+						CreateFixRow("Fix Auto V3", 1)
+						CreateFixRow("Fix Hop Sever", 2)
+						CreateFixRow("Fix Tween", 3)
+
 						local RenderStepped = RunService.RenderStepped
 						local frameStroke = UIStroke
 						local titleLabelRef = titleLabel
-						local subtitleLabelRef = subtitleLabel
-						local discordLabelRef = discordLabel
 
 						RenderStepped:Connect(function()
 							local timestamp = tick()
@@ -256,18 +368,11 @@ local function RunMainScript()
 							frameStroke.Color = Color3.fromHSV(timestamp % 3 / 3, 1, 1)
 							titleLabelRef.TextColor3 = Color3.fromHSV(timestamp * 0.5 % 1, 0.7, 1)
 
-							local hueTime = timestamp * 3
-							local waveA = (math.sin(hueTime) + 1) / 2
+							local pulseTime = timestamp * 3
+							local pulseWave = (math.sin(pulseTime) + 1) / 2
 
-							subtitleLabelRef.TextColor3 = Color3.new(waveA, 1, waveA)
-
-							local hueTime2 = timestamp * 1.5
-							local waveB = (math.sin(hueTime2) + 1) / 2
-
-							discordLabelRef.TextColor3 = Color3.fromRGB(100 + waveB * 155, 200, 255)
+							StatusDot.BackgroundColor3 = Color3.fromRGB(80, 255 - pulseWave * 40, 140)
 						end)
-
-						local statusLabel = subtitleLabel
 
 						local function SetStatus(text)
 							statusLabel.Text = text
