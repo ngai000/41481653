@@ -1,6 +1,6 @@
 -- =================================================================
--- PREHISTORIC AUTO FIND & BOAT SYSTEM (REFACTORED FROM USER CODE)
--- LOCK SPEED: 250 | MAGNET SCANNER: 5 SECONDS
+-- MODULE: VOLCANIC MAGNET CHECK & AUTO BOAT SYSTEM
+-- SPEED LOCK: 250
 -- =================================================================
 
 local Players = game:GetService("Players")
@@ -8,159 +8,32 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local StarterGui = game:GetService("StarterGui")
 
-local localPlayer = Players.LocalPlayer
-local BOAT_SPEED = 250 -- Chuẩn hóa tốc độ thuyền toàn bộ hệ thống
+local LocalPlayer = Players.LocalPlayer
+local BOAT_SPEED = 250 -- Khóa cố định tốc độ ở 250 toàn hệ thống
+local TIKI_BUS_CFRAME = CFrame.new(-16204.081, 9.086, 479.225) -- Vị trí mua thuyền Tiki
 
--- Hàm gửi thông báo hệ thống
-local function SendNotify(title, text)
+-- Gửi thông báo hệ thống
+local function Notify(title, text, duration)
     pcall(function()
         StarterGui:SetCore("SendNotification", {
             Title = title,
             Text = text,
-            Duration = 3
+            Duration = duration or 3
         })
     end)
 end
 
--- 1. QUÉT VOLCANIC MAGNET TRONG TÚI (MỖI 5 GIÂY)
+-- =================================================================
+-- 1. SYSTEM SCANNER (Quét Volcanic Magnet mỗi 5s)
+-- =================================================================
 task.spawn(function()
+    local lastNotif = 0
     while task.wait(5) do
         local hasMagnet = CheckItemInventory("Volcanic Magnet")
         getgenv().dacoMagnet = hasMagnet
 
         if not hasMagnet then
-            SendNotify("SYSTEM WARNING", "Chưa có Volcanic Magnet trong túi!")
-            
-            -- Hủy các tween thuyền đang chạy nếu mất Magnet
-            if getgenv().TweenBoat then pcall(function() getgenv().TweenBoat:Cancel() end) end
-            if getgenv().TweenBoatBack then pcall(function() getgenv().TweenBoatBack:Cancel() end) end
-        end
-    end
-end)
-
--- 2. HÀM TÌM ĐẢO & MUA THUYỀN (GIỮ NGUYÊN LOGIC GỐC CỦA CÂU)
-local function AutoFindPrehistoric()
-    local mainGui = localPlayer:FindFirstChild("PlayerGui") and localPlayer.PlayerGui:FindFirstChild("Main")
-    if not mainGui then return end
-
-    local topHUD = mainGui:FindFirstChild("TopHUDList")
-    local isPrehistoricTimer = topHUD and topHUD:FindFirstChild("PrehistoricRaidTimer") and topHUD.PrehistoricRaidTimer.Visible
-    local isRaidTimer = topHUD and topHUD:FindFirstChild("RaidTimer") and topHUD.RaidTimer.Visible
-
-    -- Nếu đang trong Raid/Timer thì bỏ qua
-    if isPrehistoricTimer or isRaidTimer then
-        return
-    end
-
-    -- Yêu cầu bắt buộc phải có Volcanic Magnet mới chạy tiếp
-    if not CheckItemInventory("Volcanic Magnet") then
-        return
-    end
-
-    getgenv().RespawnVolcano = true
-    local currentBoat = checkboat()
-
-    if currentBoat then
-        local distToBoat = localPlayer:DistanceFromCharacter(currentBoat.VehicleSeat.Position)
-        
-        -- Nếu thuyền ở xa (>= 4000 studs) -> Tiến hành đi mua thuyền mới
-        if distToBoat >= 4000 then
-            local boatVendorCF = CFrame.new(-16204.0810546875, 9.0863618850708, 479.2259521484375)
-            local distToVendor = (boatVendorCF.Position - localPlayer.Character.HumanoidRootPart.Position).Magnitude
-
-            if distToVendor <= 8 then
-                -- Đã sát NPC -> Mua thuyền PirateBrigade
-                ReplicatedStorage.Remotes.CommF_:InvokeServer("BuyBoat", "PirateBrigade")
-                task.wait(3)
-            elseif distToVendor <= 1000 then
-                -- Trong khoảng 8 - 1000 studs -> Bay tới NPC
-                toTarget(boatVendorCF)
-            else
-                -- Rất xa (> 1000 studs) -> Kiểm tra điểm Spawn để Reset nhanh
-                local lastSpawn = localPlayer:FindFirstChild("Data") and localPlayer.Data:FindFirstChild("LastSpawnPoint") and localPlayer.Data.LastSpawnPoint.Value
-                if lastSpawn == "Tiki" or lastSpawn == "Tiki2" then
-                    localPlayer.Character.Humanoid.Health = 0
-                    return
-                end
-            end
-        else
-            -- Thuyền ở gần -> Kiểm tra trạng thái ngồi
-            if localPlayer.Character.Humanoid.Sit then
-                local farCF = CFrame.new(-118834.515625, 160, -78.9505844116211) * CFrame.new(0, 0, 99999999)
-                local backCF = CFrame.new(-32975.9921875, 160, 25963.7109375)
-
-                while true do
-                    task.wait(0.5)
-                    NoclipBoat(currentBoat)
-
-                    -- Logic kiểm tra khoảng cách Leviathan & quay đầu (Nếu bật Setting)
-                    if Settings["Will Back When over 10km"] then
-                        local leviDist = DistanceFindLeviathan()
-                        if leviDist >= 10000 then
-                            manageTween(currentBoat.VehicleSeat, backCF, BOAT_SPEED, "TweenBoatBack")
-                        end
-                    end
-
-                    -- Tween thuyền ra khơi với tốc độ khóa 250
-                    manageTween(currentBoat.VehicleSeat, farCF, BOAT_SPEED, "TweenBoat")
-
-                    -- Kiểm tra phát hiện Đảo Tiền Sử
-                    if Settings["Auto Find Prehistoric Island"] then
-                        if localPlayer.Character.Humanoid.Sit then
-                            local prehistoricMap = Workspace.Map:FindFirstChild("PrehistoricIsland")
-                            if not prehistoricMap then
-                                continue
-                            end
-                        end
-                    end
-                    break
-                end
-
-                -- Tắt Tween khi đã tìm thấy đảo hoặc ngắt vòng lặp
-                if getgenv().TweenBoat then
-                    getgenv().TweenBoat:Pause()
-                    getgenv().TweenBoat:Cancel()
-                end
-                if getgenv().TweenBoatBack then
-                    getgenv().TweenBoatBack:Pause()
-                    getgenv().TweenBoatBack:Cancel()
-                end
-            else
-                -- Chưa ngồi -> Dừng Tween và bay tới ghế
-                if getgenv().TweenBoat then
-                    getgenv().TweenBoat:Pause()
-                    getgenv().TweenBoat:Cancel()
-                end
-                if getgenv().TweenBoatBack then
-                    getgenv().TweenBoatBack:Pause()
-                    getgenv().TweenBoatBack:Cancel()
-                end
-                toTarget(currentBoat.VehicleSeat.CFrame)
-            end
-        end
-    end
-end
-
--- Gán hàm vào Toggle UI (Giữ nguyên cấu trúc UI gốc)
-AutoFindPrehistoric = AutoFindPrehistoric
-
-local ToggleFindIsland = FarmingVolcanoSection:CreateToggle({
-    Title = "Auto Find Prehistoric Island",
-    Desc = "",
-    Default = Settings["Auto Find Prehistoric Island"] or false
-}, function(Value)
-    if Value then
-        spawn(function()
-            while Settings["Auto Find Prehistoric Island"] do
-                task.wait(0.1)
-                pcall(function()
-                    AutoFindPrehistoric()
-                end)
-            end
-        end)
-    end
-    SaveSettings("Auto Find Prehistoric Island", Value)
-end)
+            -- Hiển thị thông báo nếu thiếu Magnet
             Notify("SYSTEM WARNING", "Chưa có Volcanic Magnet! Vui lòng craft hoặc farm thêm.", 4)
             
             -- Hủy các Tween thuyền đang chạy nếu mất Magnet đột ngột
